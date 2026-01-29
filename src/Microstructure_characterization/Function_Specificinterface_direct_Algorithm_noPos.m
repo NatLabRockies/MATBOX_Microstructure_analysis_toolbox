@@ -1,11 +1,13 @@
 function [surface] = Function_Specificinterface_direct_Algorithm_noPos(M)
-% M: 0 otgher phases, 1: phase A, 10: phase B
+% M: 0 other phases, 1: phase A, 10: phase B
 
 sz = size(M);
 dimension = length(sz);
 
+M = int8(M);
+
 % Detection of the faces normal to the direction 1
-Face_normal_1 = abs (M(1:sz(1)-1,:,:) - M(2:sz(1),:,:));
+Face_normal_1 = abs (M(1:sz(1)-1,:,:) - M(2:sz(1),:,:)); % Fail if uint8
 Face_normal_1(Face_normal_1~=9)=0;
 Face_normal_1(Face_normal_1==9)=1;
 % Summation of all these faces

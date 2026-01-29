@@ -5,10 +5,10 @@ nargin; % Number of input variable when the function is call
 if nargin == 3 
     opt.fig_infig = true;
     opt.fig_format = {'png'};
-    opt.png_DPI = 150;
+    opt.png_DPI = 300;
 elseif nargin == 4
     if ~isfield(opt,'png_DPI')
-        opt.png_DPI = 150;
+        opt.png_DPI = 300;
     end
 end
 

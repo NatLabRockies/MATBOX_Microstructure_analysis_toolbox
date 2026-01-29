@@ -811,24 +811,24 @@ if strcmp(segmentation_type,'instance') || strcmp(segmentation_type,'semantic an
         Charact_Tortuosity_main(M_binaryinstance, [], [], [], [], infovol_ins, optc, opts_ins.tortuosity) % Call function
     end
 end
-% 
-% %% Continuous particle size distribution CPSD
-% if strcmp(segmentation_type,'semantic') || strcmp(segmentation_type,'semantic and instance')
-%     if sum(opts_sem.cpsd.todo)
-%         disp '    Continuous particle size distribution (CPSD): semantic file';
-%         disp '    -----------------------------------------------------------';
-%         disp ' ';
-%         Charact_Cpsd(M_semantic, infovol_sem, optc, opts_sem.cpsd, foo) % Call function
-%     end
-% end
-% if strcmp(segmentation_type,'instance') || strcmp(segmentation_type,'semantic and instance')
-%     if sum(opts_ins.cpsd.todo)
-%         disp '    Continuous particle size distribution (CPSD): Binary instance file';
-%         disp '    ------------------------------------------------------------------';
-%         disp ' ';        
-%         Charact_Cpsd(M_binaryinstance, infovol_ins, optc, opts_ins.cpsd, M_instance) % Call function
-%     end
-% end
+
+%% Continuous particle size distribution CPSD
+if strcmp(segmentation_type,'semantic') || strcmp(segmentation_type,'semantic and instance')
+    if sum(opts_sem.cpsd.todo)
+        disp '    Continuous particle size distribution (CPSD): semantic file';
+        disp '    -----------------------------------------------------------';
+        disp ' ';
+        Charact_Cpsd_main(M_semantic, infovol_sem, optc, opts_sem.cpsd, foo) % Call function
+    end
+end
+if strcmp(segmentation_type,'instance') || strcmp(segmentation_type,'semantic and instance')
+    if sum(opts_ins.cpsd.todo)
+        disp '    Continuous particle size distribution (CPSD): Binary instance file';
+        disp '    ------------------------------------------------------------------';
+        disp ' ';        
+        Charact_Cpsd_main(M_binaryinstance, infovol_ins, optc, opts_ins.cpsd, M_instance) % Call function
+    end
+end
 % 
 % %% METRICS PER PARTICLE
 % if ~isempty(opts_ins) && opts_ins.metricsperparticle.todo
