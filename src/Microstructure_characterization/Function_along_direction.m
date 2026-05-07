@@ -194,6 +194,7 @@ for current_phase=1:1:p.number_phase
         if p.opt.save.savefig % Save figure
             function_savefig(Fig, p.Current_folder, [p.figure_filename char(p.phasename_todo(current_phase_todo))], p.opt.save); % Call function
         end
+        p.opt.format.autoclosefig = true;
         if p.opt.format.autoclosefig
             close(Fig); % Do not keep open figures
         end       

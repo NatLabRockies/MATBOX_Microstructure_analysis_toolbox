@@ -1,4 +1,4 @@
-function [Particle_size, dmap, IDX] = Function_particle_size_CPSD_Algorithm(BW,varargin)
+function [Particle_size, dmap, IDX] = Cpsd_algorithm(BW,varargin)
 % Return largest diameter in voxel length of the largest sphere that contain each voxel noted 1
  
 if isempty(varargin)
@@ -24,7 +24,7 @@ if roundvalues
         dmap=round(dmap);
     end
 end
-
+dmap
 %% STEP 2: ASSIGN VOXELS TO THE LARGEST SPHERE THAT CONTAINS THEM
 % Definition of the continum spherical PSD
 % In order to reduce CPU time, we will (i) check the condition "voxel belong to
@@ -52,6 +52,13 @@ if ~isinf(current_distance)
         current_distance_map( abs(dmap-current_distance)<tolerance ) = 1;      % Voxels which are the center of the largest sphere are set equal to 1
         current_distance_map = bwdist(current_distance_map,'euclidean');
         cond1 = current_distance_map<(current_distance+tolerance);             % Assign all voxels that does not belong to a largest sphere
+
+        % Real radius
+        if current_distance == 1
+            real_radius = 0.5;
+        end
+
+
         Particle_size ( cond0 & cond1 & Particle_size<(current_distance+tolerance) ) = current_distance;
         %Particle_size (cond1 & Particle_size<(current_distance+tolerance) ) = current_distance;
 

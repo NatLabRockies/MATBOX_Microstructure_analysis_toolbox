@@ -42,11 +42,15 @@ for kgroup = 1:length(group)
                     end
                     h=plot(direction(d).xaxis, y, 'LineStyle', group(kgroup).direction(d).array(kp).linestyle, 'LineWidth',optformat.linewidth, 'Color', group(kgroup).direction(d).array(kp).color);
 
-                    str = round(group(kgroup).mean(kp), group(kgroup).yaxis_round);
-                    if ~isempty(group(kgroup).yaxis_unit)
-                        set(h,'DisplayName',[group(kgroup).direction(d).array(kp).name ' (' num2str(str) ' ' group(kgroup).yaxis_unit ')'])
+                    if kp <= length(group(kgroup).mean)
+                        str = round(group(kgroup).mean(kp), group(kgroup).yaxis_round);
+                        if ~isempty(group(kgroup).yaxis_unit)
+                            set(h,'DisplayName',[group(kgroup).direction(d).array(kp).name ' (' num2str(str) ' ' group(kgroup).yaxis_unit ')'])
+                        else
+                            set(h,'DisplayName',[group(kgroup).direction(d).array(kp).name ' (' num2str(str) ')'])
+                        end
                     else
-                        set(h,'DisplayName',[group(kgroup).direction(d).array(kp).name ' (' num2str(str) ')'])
+                        set(h,'DisplayName','Background');
                     end
                     varnames = [{[char(direction(d).name) ' ' direction(d).xaxis_unit]} {[group(kgroup).direction(d).array(kp).name ' ' group(kgroup).yaxis_unit]}];
                     DATA_writetable.sheet(sheet).name = [char(direction(d).name) ' ' group(kgroup).direction(d).array(kp).name];

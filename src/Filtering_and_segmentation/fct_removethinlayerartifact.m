@@ -10,7 +10,7 @@ idx_artifact = [];
 % Loop over intermediate phase
 if numberphase>2
     for k=1:1:numberphase
-        tmp = zeros(sz);
+        tmp = zeros(sz,'uint8');
         tmp(M==labels(k))=1;
         dmaps(k).array = bwdist(tmp);
     end
@@ -65,8 +65,12 @@ if p.illustrate
 end
 
 % Remove artifacts
-[~, idx_nearest] = bwdist(~artifacts);
-M(idx_artifact) = M(idx_nearest(idx_artifact));
+if p.equidistribution
+    [~, idx_nearest] = bwdist(~artifacts);
+    M(idx_artifact) = M(idx_nearest(idx_artifact));
+else
+    M(idx_artifact) = p.assignto;
+end
 
 if p.illustrate
     figure;
@@ -77,3 +81,5 @@ end
 [M] = fct_intconvert(M);
 
 end
+
+

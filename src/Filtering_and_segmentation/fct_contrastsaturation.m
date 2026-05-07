@@ -1,81 +1,98 @@
 function [M,newtype,foo] = fct_contrastsaturation(M,p)
 
-sz = size(M);
 foo=[];
 newtype = 'same';
 
+sz = size(M);
+dimension = length(sz);
+
+pp.volumethreshold_above = p.volumethreshold_above;
+pp.volumethreshold_below = p.volumethreshold_below;
+
 % Hard coded parameters
-max_iteration=100;
-target_error=0.1; % in percent
+pp.max_iteration=100;
+pp.target_error=0.1; % in percent
 
-% % Threshold will be identified using a Dichotomy approach.
-% Faster than compute histogram.
-max_=max(max(max(M)));
-min_=min(min(min(M)));
-number_voxel = numel(M);
+if p.excludebackground
+    if strcmp(p.selectbackground,'From label')
+        p.background_volume = zeros(sz,'uint8');
+        p.background_volume(M==p.background_label) = 1;
+    end
+end
 
-if p.volumethreshold_above~=0
-    threshold_highervalue=max_;
-    error_=1e9; iteration_no=0;
-    while error_>target_error && iteration_no<max_iteration % Dichotomy loop
-        iteration_no=iteration_no+1; % Update iteration number
-        current_threshold=min_+round((max_-min_)/2); % Current threshold
-        % Calculate volume
-        volume_ratio = 100*sum(sum(sum(M>current_threshold)))/number_voxel;
-        % Check error
-        rel_error=volume_ratio-p.volumethreshold_above;
-        error_=abs(rel_error);
-        % Keep going if error is still too high
-        if error_<target_error
-            % Exit the while loop
-            break
-        else
-            % Update the interval
-            if rel_error>0
-                min_= current_threshold;
-            else
-                max_=current_threshold;
+if p.local
+    d = str2num(p.local_along(end));
+    if d==3 && dimension==2
+        warning('Local contrast correction along third axis is not possible: array is 2D.')
+        return
+    end
+  
+    Msav = M;
+    for k = 1:sz(d)
+        k0 = max([1 k-p.local_thickness]);
+        k1 = min([sz(d) k+p.local_thickness]);
+
+        if d==1 
+            sl_new = squeeze(Msav(k,:,:));
+            sl = squeeze(Msav(k0:k1,:,:));
+            if p.excludebackground
+                bk = squeeze(p.background_volume(k0:k1,:,:));
+                sl(bk==1)=[];
+            end       
+
+        elseif d==2
+            sl_new = squeeze(Msav(:,k,:));
+            sl = squeeze(Msav(:,k0:k1,:));
+            if p.excludebackground
+                bk = squeeze(p.background_volume(:,k0:k1,:));
+                sl(bk==1)=[];
+            end              
+
+        elseif d==3
+            sl_new =  Msav(:,:,k);
+            sl = Msav(:,:,k0:k1);
+            if p.excludebackground
+                bk = p.background_volume(:,:,k0:k1);
+                sl(bk==1)=[];
             end
         end
-    end
-    threshold_highervalue=current_threshold;
-end
 
-if p.volumethreshold_below~=0
-    max_=max(max(max(M)));
-    min_=min(min(min(M)));
-    threshold_lowervalue=min_;
-    error_=1e9; iteration_no=0;
-    while error_>target_error && iteration_no<max_iteration % Dichotomy loop
-        iteration_no=iteration_no+1; % Update iteration number
-        current_threshold=min_+round((max_-min_)/2); % Current threshold
-        % Calculate volume
-        volume_ratio = 100*sum(sum(sum(M<current_threshold)))/number_voxel;
-        % Check error
-        rel_error=volume_ratio-p.volumethreshold_below;
-        error_=abs(rel_error);
-        % Keep going if error is still too high
-        if error_<target_error
-            % Exit the while loop
-            break
-        else
-            % Update the interval
-            if rel_error>0
-                max_= current_threshold;
-            else
-                min_=current_threshold;
+        if ~isempty(sl)
+            sl = reshape(sl,[numel(sl), 1]);
+            [threshold_lowervalue, threshold_highervalue] = fct_contrastsaturation_algo(sl,pp);
+
+            if p.volumethreshold_above~=0 && ~isempty(threshold_highervalue)
+                sl_new(sl_new>=threshold_highervalue)=threshold_highervalue;
+            end
+            if p.volumethreshold_below~=0 && ~isempty(threshold_lowervalue)
+                sl_new(sl_new<=threshold_lowervalue)=threshold_lowervalue;
+            end
+
+            if d==1
+                M(k,:,:) = sl_new;
+            elseif d==2
+                M(:,k,:) = sl_new;
+            elseif d==3
+                M(:,:,k) = sl_new;
             end
         end
-    end
-    threshold_lowervalue=current_threshold;
-end
 
-% Apply changes
-if p.volumethreshold_above~=0
-    M(M>=threshold_highervalue)=threshold_highervalue;
-end
-if p.volumethreshold_below~=0
-    M(M<=threshold_lowervalue)=threshold_lowervalue;
+
+    end
+
+else
+    tmp = M;
+    if p.excludebackground
+        tmp(p.background_volume==1)=[];
+    end
+    tmp = reshape(tmp,[numel(tmp), 1]);
+    [threshold_lowervalue, threshold_highervalue] = fct_contrastsaturation_algo(tmp,pp);
+    if p.volumethreshold_above~=0
+        M(M>=threshold_highervalue)=threshold_highervalue;
+    end
+    if p.volumethreshold_below~=0
+        M(M<=threshold_lowervalue)=threshold_lowervalue;
+    end
 end
 
 [M] = fct_intconvert(M);

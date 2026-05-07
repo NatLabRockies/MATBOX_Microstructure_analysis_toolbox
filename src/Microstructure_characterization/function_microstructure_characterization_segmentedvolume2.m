@@ -37,7 +37,7 @@ if strcmp(segmentation_type,'semantic') || strcmp(segmentation_type,'semantic an
     disp('   Import successful!');
     sz = size(M_semantic); % Size of the loaded domain (number of voxel)
 
-    % Import bulk properties
+    % % Import bulk properties
     fprintf('   - Nanoporosity representation is: %s\n',infovol.nanoporosity_representation)
     if strcmp(infovol.nanoporosity_representation,'Mixed (heterogeneous)')
         disp(['     Loading nanoporosity file: ' infovol.loadingpath_nanoporosity]);
@@ -59,22 +59,20 @@ if strcmp(segmentation_type,'semantic') || strcmp(segmentation_type,'semantic an
         end 
     end
 
-    fprintf('   - Wetting representation is: %s\n', infovol.partial_wetting_representation)
-    if strcmp(infovol.partial_wetting_representation,'Heterogeneous')
-        fprintf('     Loading %s file: %s\n', infovol.partial_wetting_value_is, infovol.loadingpath_wetting);
+    fprintf('   - Wetting representation is: %s\n',infovol.wetting_representation)
+    if strcmp(infovol.wetting_representation,'Mixed (heterogeneous)')
+        fprintf('     Loading %s file: %s\n', infovol.wetting_input_is, infovol.loadingpath_wetting);
         fprintf('        Please wait...');
         [M_wetting,outcome] = function_load_tif(infovol.loadingpath_wetting,'single');
         if ~outcome % fail to import
             return
         end
         disp('   Import successful!');
-        if strcmp(infovol.partial_wetting_value_is,'Air saturation') % Convert to wetting
+        if strcmp(infovol.wetting_input_is,'Air saturation') % Convert to wetting
             M_wetting = 1-M_wetting;
             fprintf('        Converted to wetting = 1 - air saturation.\n');
-        end        
-    elseif strcmp(infovol.partial_wetting_representation,'Ideal')
-        M_wetting = ceil(M_nanoporosity); % 0 or 1
-    elseif strcmp(infovol.partial_wetting_representation,'Uniform')
+        end              
+    else
         M_wetting = zeros(sz,'single')-1;
         if infovol.isbackground
             k0 = 2;
@@ -82,13 +80,16 @@ if strcmp(segmentation_type,'semantic') || strcmp(segmentation_type,'semantic an
             k0 = 1;
         end
         for k=k0:length(infovol.phaselabel_semantic)
-            if strcmp(infovol.partial_wetting_value_is,'Air saturation') % Convert to wetting
-                M_wetting(M_semantic==infovol.phaselabel_semantic(k)) = 1-cell2mat(infovol.air_saturation(k));
-            else
-                M_wetting(M_semantic==infovol.phaselabel_semantic(k)) = cell2mat(infovol.wetting(k));
+            if ~ischar(cell2mat(infovol.air_saturation(k)))
+                if strcmp(infovol.wetting_input_is,'Air saturation') % Convert to wetting
+                    M_wetting(M_semantic==infovol.phaselabel_semantic(k)) = 1-cell2mat(infovol.air_saturation(k));
+                else
+                    M_wetting(M_semantic==infovol.phaselabel_semantic(k)) = cell2mat(infovol.wetting(k));
+                end
             end
         end
-    end      
+    end  
+    M_wetting(M_nanoporosity==0)=0;
 
     if sum(opts_sem.tortuosity.todo)>=1 || opts_sem.tortuosity.pore_combined_todo || opts_sem.tortuosity.solid_combined_todo
         fprintf('   - Pore transport representation is: %s\n',infovol.poretransport_representation)
@@ -232,7 +233,7 @@ if optc.save.inputfiles
         if strcmp(infovol.nanoporosity_representation,'Mixed (heterogeneous)')
             function_save_tif(M_nanoporosity, fullfile(volume_folder,'Imported_nanoporosity.tif'));
         end
-        if strcmp(infovol.partial_wetting_representation,'Heterogeneous')
+        if strcmp(infovol.wetting_representation,'Mixed (heterogeneous)')
             function_save_tif(M_wetting, fullfile(volume_folder,'Imported_wetting.tif'));
         end        
         if ~isempty(M_bulkdiffusivity)
@@ -302,7 +303,7 @@ if strcmp(segmentation_type,'semantic') || strcmp(segmentation_type,'semantic an
             c4(end+1,1) = {num2str(data_MB,'%1.1f')};
         end
     end
-    if strcmp(infovol.partial_wetting_representation,'Heterogeneous')
+    if strcmp(infovol.wetting_representation,'Mixed (heterogeneous)')
         c1(end+1,1) = {'Wetting'};
         c2(end+1,1) = {infovol.loadingpath_wetting};
         tmp=whos('M_wetting'); data_MB=tmp.bytes*9.53674e-7;
@@ -533,16 +534,14 @@ if infovol.scaling_factor ~= 1.0
             end
         end
 
-        if strcmp(infovol.partial_wetting_representation,'Heterogeneous')
+        if strcmp(infovol.wetting_representation,'Mixed (heterogeneous)')
             parameters_scaling.label_or_greylevel = 'Grey level';
             if parameters_scaling.scaling_factor<=1
                 M_wetting = function_scaling(M_wetting,parameters_scaling);
             else
                 [~,M_wetting] = function_downscaling_perlabel(M_semantic,M_wetting,parameters_scaling);
             end
-        elseif strcmp(infovol.partial_wetting_representation,'Ideal')
-            M_wetting = ceil(M_nanoporosity); % 0 or 1
-        elseif strcmp(infovol.partial_wetting_representation,'Uniform')
+        else
             M_wetting = zeros(sz,'single')-1;
             if infovol.isbackground
                 k0 = 2;
@@ -550,13 +549,16 @@ if infovol.scaling_factor ~= 1.0
                 k0 = 1;
             end
             for k=k0:length(infovol.phaselabel_semantic)
-                if strcmp(infovol.partial_wetting_value_is,'Air saturation') % Convert to wetting
-                    M_wetting(M_semantic_rescaled==infovol.phaselabel_semantic(k)) = 1-cell2mat(infovol.air_saturation(k));
-                else
-                    M_wetting(M_semantic_rescaled==infovol.phaselabel_semantic(k)) = cell2mat(infovol.wetting(k));
+                if ~ischar(cell2mat(infovol.air_saturation(k)))
+                    if strcmp(infovol.wetting_input_is,'Air saturation') % Convert to wetting
+                        M_wetting(M_semantic_rescaled==infovol.phaselabel_semantic(k)) = 1-cell2mat(infovol.air_saturation(k));
+                    else
+                        M_wetting(M_semantic_rescaled==infovol.phaselabel_semantic(k)) = cell2mat(infovol.wetting(k));
+                    end
                 end
             end
         end
+        M_wetting(M_nanoporosity==0)=0;
 
         if ~isempty(M_bulkdiffusivity)
             if strcmp(infovol.poretransport_representation,'Diffusivity D (heterogeneous)')
@@ -678,14 +680,14 @@ if (ROI_do || infovol.scaling_factor ~= 1.0) && optc.save.modified_inputfiles
         if strcmp(infovol.nanoporosity_representation,'Mixed (heterogeneous)')
             function_save_tif(M_nanoporosity, fullfile(volume_folder,'Modified_nanoporosity.tif'));
         end
+        if strcmp(infovol.wetting_representation,'Mixed (heterogeneous)')
+            function_save_tif(M_wetting, fullfile(volume_folder,'Modified_wetting.tif'));
+        end        
         if ~isempty(M_bulkdiffusivity)
             function_save_tif(M_bulkdiffusivity, fullfile(volume_folder,'Modified_bulkdiffusivity.tif'));
         end
         if ~isempty(M_bulkconductivity)
             function_save_tif(M_bulkconductivity, fullfile(volume_folder,'Modified_bulkconductivity.tif'));
-        end
-        if strcmp(infovol.partial_wetting_representation,'Heterogeneous')
-            function_save_tif(M_wetting, fullfile(volume_folder,'Modified_wetting.tif'));
         end
     end
     if strcmp(segmentation_type,'instance') || strcmp(segmentation_type,'semantic and instance')
@@ -800,6 +802,9 @@ if strcmp(segmentation_type,'semantic') || strcmp(segmentation_type,'semantic an
         disp '    TORTUOSITY FACTOR: semantic file';
         disp '    --------------------------------';
         disp ' ';
+
+        % run same code 3 times for Keff i+, Keff e-, and Deff g
+
         Charact_Tortuosity_main(M_semantic, M_nanoporosity, M_wetting, M_bulkdiffusivity, M_bulkconductivity, infovol_sem, optc, opts_sem.tortuosity) % Call function
     end
 end

@@ -18,7 +18,7 @@ nargin; % Number of input variable when the function is call
 
 if nargin ~= expected_number_argument % Unexpected number of argument
     
-    if nargin == 4 % Case for function called as: Function_particle_size_CPSD(Phase_microstructure, labels, voxelsize, unit)
+    if nargin == 4 % Case for function called as: Function_particle_size_CPSD(M, labels, voxelsize, unit)
         labels = infovol; clear infovol;
         voxelsize = opt; clear opt;
         unit = p; clear p;
@@ -37,7 +37,7 @@ if nargin ~= expected_number_argument % Unexpected number of argument
 
         % Set default phase information
         allcolor=[get(0, 'DefaultAxesColorOrder'); rand(100,3);];
-        infovol.phaselabel = unique(Phase_microstructure);
+        infovol.phaselabel = unique(M);
         for k=1:1:length(infovol.phaselabel) % Loop over all unique values
             infovol.phasename(k,1) = {['Phase ' num2str(infovol.phaselabel(k))]}; % Assign phase name based on code value
             infovol.phasecolor(k,:) = allcolor(k,:);
@@ -112,7 +112,7 @@ if ~exist(Current_folder,'dir') % Folder existence is checked, and created if ne
 end
 
 %% VOLUME INFORMATION
-Domain_size = size(Phase_microstructure);
+Domain_size = size(M);
 if length(Domain_size)==2 % Add third column with unit value
     Domain_size = [Domain_size 1];
     number_dimension = 2;
@@ -177,9 +177,9 @@ if isfield(p,'removetruncatedparticles') && p.removetruncatedparticles && ~isemp
     if ~isempty(attheborders)
         for k=1:1:length(attheborders)
             if infovol.isbackground
-                Phase_microstructure(Mins==attheborders(k))=1;
+                M(Mins==attheborders(k))=1;
             else
-                Phase_microstructure(Mins==attheborders(k))=0;
+                M(Mins==attheborders(k))=0;
             end
         end
     end
@@ -203,13 +203,14 @@ roundingCPDS = true; % Faster, minimal loss of precision
 
 time_cpu_start_volume = cputime; % CPU start
 time_clock_start_volume = tic; % Stopwatch start
+p.symmetry = false; %% %% %% ?
 if infovol.isbackground && p.symmetry
     psym.Background = zeros(Domain_size);
-    idx_background = find(Phase_microstructure == 0);
+    idx_background = find(M == 0);
     psym.Background(idx_background)=1;
     psym.perslice = false;
-    Phase_microstructure_initial = Phase_microstructure;
-    [Phase_microstructure] = fct_symmetry(Phase_microstructure,psym);
+    Phase_microstructure_initial = M;
+    [M] = fct_symmetry(M,psym);
 end
 
 % Initialization (generic)
@@ -231,13 +232,13 @@ for current_phase=1:1:number_phase % Loop over all phases
 
         current_phase_todo=current_phase_todo+1;
         phasename_todo(current_phase_todo,1) = infovol.phasename(current_phase,1);
-        Numbervoxel_phase(current_phase_todo,1)= sum(sum(sum(Phase_microstructure==phaselabel(current_phase_todo,1) )));
+        Numbervoxel_phase(current_phase_todo,1)= sum(sum(sum(M==phaselabel(current_phase_todo,1) )));
 
         % % Algorithm
         phaselabel(current_phase_todo,1) = infovol.phaselabel(current_phase);
         % Create a binary microstructure : 1 = current analysed phase, 0 = complementay phase
         binary_phase=zeros(Domain_size); % Initialization
-        binary_phase(Phase_microstructure == phaselabel(current_phase_todo,1)) = 1; % Binary phase
+        binary_phase(M == phaselabel(current_phase_todo,1)) = 1; % Binary phase
         [Particle_size, ~, ~] = Function_particle_size_CPSD_Algorithm(binary_phase,roundingCPDS); % Call algorithm
         if infovol.isbackground && p.symmetry
             binary_phase(idx_background) = 0;
@@ -393,7 +394,7 @@ parameters_distributionfigure.legendfontsize = opt.format.legendfontsize;
 parameters_distributionfigure.titlefontsize = opt.format.titlefontsize;
 parameters_distributionfigure.sgtitlefontsize = opt.format.sgtitlefontsize;
 parameters_distributionfigure.unit = Dunit;
-parameters_distributionfigure.closefig = opt.format.autoclosefig;
+parameters_distributionfigure.closefig = true; % % %
 for current_phase_todo=1:1:number_phase_todo % Loop over all phases
     parameters_distributionfigure.figurename =  ['Particle diameter, ' char(phasename_todo(current_phase_todo,1))];
     parameters_distributionfigure.filename = ['Diameter_CPSD_' char(phasename_todo(current_phase_todo,1))];
@@ -428,10 +429,14 @@ alongdirection_parameters.axisunit = axisunit;
 alongdirection_parameters.legendname = 'diameter';
 alongdirection_parameters.mean_val = PSD_results(:,2);
 alongdirection_parameters.Current_folder = Current_folder;
+alongdirection_parameters.format.autoclosefig = true;
 [Table_evolution] = Function_along_direction(alongdirection_parameters); % Call function
 Results_cpsd.Table_evolution = Table_evolution; % Save in main table result
 
 %% PARTICLE DIAMETER MAP
+
+p.colormap = 'turbo';
+p.colormap_background = 'grey';
 
 % Color map
 %myColorMap = turbo(256);
@@ -504,6 +509,7 @@ for current_phase_todo=1:1:number_phase_todo % Loop over phases
         filename= sprintf('View_CPSD_%s', char(phasename_todo(current_phase_todo)));
         function_savefig(Fig, Current_folder, filename, opt.save); % Call function
     end
+    opt.format.autoclosefig = true;
     if opt.format.autoclosefig
         close(Fig); % Do not keep open figures
     end
@@ -549,9 +555,9 @@ if ~isempty(p.scaling) % Check if voxel size analysis is asked
         parameters_scaling.background = min(infovol.phaselabel);
         % Scale
         if infovol.isbackground && p.symmetry
-            Phase_microstructure = Phase_microstructure_initial;
+            M = Phase_microstructure_initial;
         end
-        Phase_microstructure_resized = function_scaling(Phase_microstructure,parameters_scaling);
+        Phase_microstructure_resized = function_scaling(M,parameters_scaling);
         if infovol.isbackground && p.symmetry
             psym.Background = zeros(size(Phase_microstructure_resized));
             idx_background = find(Phase_microstructure_resized == 0);
@@ -727,7 +733,7 @@ end
 
 if p.RVE.number_RVE>0
     if infovol.isbackground && p.symmetry
-        Phase_microstructure = Phase_microstructure_initial;
+        M = Phase_microstructure_initial;
     end
 
 
@@ -767,7 +773,7 @@ if p.RVE.number_RVE>0
                 x0 = xcrop(k_nestedRVE,1); x1 = xcrop(k_nestedRVE,2);
                 y0 = xcrop(k_nestedRVE,3); y1 = xcrop(k_nestedRVE,4);
                 z0 = xcrop(k_nestedRVE,5); z1 = xcrop(k_nestedRVE,6);
-                Phase_microstructure_nested = Phase_microstructure(x0:x1,y0:y1,z0:z1);
+                Phase_microstructure_nested = M(x0:x1,y0:y1,z0:z1);
                 Domain_size_nested = size(Phase_microstructure_nested);
             end
             
@@ -812,7 +818,7 @@ if p.RVE.number_RVE>0
                 clear current_subdomain;
                 % Crop volume
                 if k_nestedRVE == 0
-                    current_subdomain = Phase_microstructure(x0:x1,y0:y1,z0:z1);
+                    current_subdomain = M(x0:x1,y0:y1,z0:z1);
                 else
                     current_subdomain = Phase_microstructure_nested(x0:x1,y0:y1,z0:z1);
                 end                    

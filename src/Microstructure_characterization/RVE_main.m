@@ -272,10 +272,12 @@ for k_RVE = 1:length(pRVEs) % Loop over all RVE analysis
                 end
                 n_voxel = voxel_number_tmp - n_voxel_background;
 
-                if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore_idealwetting, vf_pore_partialwetting, vf_air]
+                if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore, vf_liquid, vf_gas, vf_AM]
+                    nvoxel.AM = 0;
                     nvoxel.solid = 0;
-                    nvoxel.pore_idealwetting = 0;
-                    nvoxel.pore_partialwetting = 0;
+                    nvoxel.pore = 0;
+                    nvoxel.liquid = 0;
+                    nvoxel.gas = 0;
                 end
 
                 % Volume fraction label-wise
@@ -283,26 +285,37 @@ for k_RVE = 1:length(pRVEs) % Loop over all RVE analysis
                 for current_domain=1:number_domain % Loop over all phases
                     time_cpu_start_phase = cputime; % CPU start
                     time_clock_start_phase = tic; % Stopwatch start
-                    [~,vf,~,n] = Charact_Volumefractions_algorithm(current_subdomain_labels, pMET.metric(1).domain_label(current_domain), n_voxel, current_subdomain_np, current_subdomain_wet);
+                    [~,vf,~,n] = Charact_Volumefractions_algorithm(current_subdomain_labels, pMET.metric(1).domain_label(current_domain), n_voxel, current_subdomain_np, current_subdomain_wet, infovol.activematerial_identification);
                     if n_voxel_background==0
-                        metric(1).Property_eachsubdomain(subdomain_id,current_domain+4) = vf.phase_label;
+                        metric(1).Property_eachsubdomain(subdomain_id,current_domain+4) = vf.label;
                     else
                         metric(1).Property_eachsubdomain(subdomain_id,current_domain+4) = NaN;
                     end
                     % Time
-                    timedata_perphase = [timedata_perphase; [n.n_voxel_label (cputime-time_cpu_start_phase) toc(time_clock_start_phase)]];
+                    timedata_perphase = [timedata_perphase; [n.label (cputime-time_cpu_start_phase) toc(time_clock_start_phase)]];
                     if nMetric==2
-                        nvoxel.solid = nvoxel.solid + n.solid;
-                        nvoxel.pore_idealwetting = nvoxel.pore_idealwetting + n.pore_idealwetting;
-                        nvoxel.pore_partialwetting = nvoxel.pore_partialwetting + n.pore_partialwetting;
+                        nvoxel.AM = nvoxel.AM + n.label_and_AM;
+                        nvoxel.solid = nvoxel.solid + n.label_and_solid;
+                        nvoxel.pore = nvoxel.pore + n.label_and_pore;
+                        nvoxel.liquid = nvoxel.liquid + n.label_and_liquid;
+                        nvoxel.gas = nvoxel.gas + n.label_and_gas;
                     end
                 end
-                if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore_idealwetting, vf_pore_partialwetting, vf_air]
-                    vf_pore_idealwetting = nvoxel.pore_idealwetting/n_voxel;
-                    vf_solid = nvoxel.solid/n_voxel;
-                    vf_pore_partialwetting = nvoxel.pore_partialwetting/n_voxel;
-                    vf_air = 1 - vf_solid - vf_pore_partialwetting;
-                    metric(2).Property_eachsubdomain(subdomain_id,5:end) = [vf_solid vf_pore_idealwetting vf_pore_partialwetting vf_air];
+                if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore, vf_liquid, vf_gas, vf_AM]
+                    if n_voxel_background==0
+                        vf_AM = nvoxel.AM/n_voxel;
+                        vf_solid = nvoxel.solid/n_voxel;
+                        vf_pore = nvoxel.pore/n_voxel;
+                        vf_liquid = nvoxel.liquid/n_voxel;
+                        vf_gas = nvoxel.gas/n_voxel;
+                    else
+                        vf_AM = NaN;
+                        vf_solid = NaN;
+                        vf_pore = NaN;
+                        vf_liquid = NaN;
+                        vf_gas = NaN;                        
+                    end
+                    metric(2).Property_eachsubdomain(subdomain_id,5:end) = [vf_solid vf_pore vf_liquid vf_gas vf_AM];                    
                 end
 
                 % CPU and stopwatch time - end

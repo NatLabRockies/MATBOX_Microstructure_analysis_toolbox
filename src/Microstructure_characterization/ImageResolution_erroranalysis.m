@@ -22,6 +22,11 @@ if dimension == 2
     sz(3)=1;
 end
 
+Current_folder = fullfile(Current_folder,'ImRes');
+if exist(Current_folder,'dir')==0 % Folder existence is checked, and created if necessary
+    mkdir(Current_folder);
+end
+
 %% CALCULATION
 % Initialization
 for kMetric = 1:nMetric
@@ -32,7 +37,7 @@ for kMetric = 1:nMetric
 end
 
 % Loop on each voxel size
-for current_iteration=1:1:number_resize
+for current_iteration=1:number_resize
 
     % % Microstructure scaling
     % New voxel size
@@ -68,16 +73,14 @@ for current_iteration=1:1:number_resize
             end
         end
 
-        if strcmp(infovol.partial_wetting_representation,'Heterogeneous')
+        if strcmp(infovol.wetting_representation,'Mixed (heterogeneous)')
             parameters_scaling.label_or_greylevel = 'Grey level';
             if parameters_scaling.scaling_factor<=1
                 wetting_resized = function_scaling(Wetting,parameters_scaling);
             else
                 [~,wetting_resized] = function_downscaling_perlabel(Msem,Wetting,parameters_scaling);
             end
-        elseif strcmp(infovol.partial_wetting_representation,'Ideal')
-            wetting_resized = ceil(Nanoporosity_resized); % 0 or 1
-        elseif strcmp(infovol.partial_wetting_representation,'Uniform')
+        else
             wetting_resized = zeros(sz,'single')-1;
             if infovol.isbackground
                 k0 = 2;
@@ -85,13 +88,16 @@ for current_iteration=1:1:number_resize
                 k0 = 1;
             end
             for k=k0:length(infovol.phaselabel_semantic)
-                if strcmp(infovol.partial_wetting_value_is,'Air saturation') % Convert to wetting
-                    wetting_resized(M_semantic==infovol.phaselabel_semantic(k)) = 1-cell2mat(infovol.air_saturation(k));
-                else
-                    wetting_resized(M_semantic==infovol.phaselabel_semantic(k)) = cell2mat(infovol.wetting(k));
+                if ~ischar(cell2mat(infovol.air_saturation(k)))
+                    if strcmp(infovol.wetting_input_is,'Air saturation') % Convert to wetting
+                        wetting_resized(M_semantic==infovol.phaselabel_semantic(k)) = 1-cell2mat(infovol.air_saturation(k));
+                    else
+                        wetting_resized(M_semantic==infovol.phaselabel_semantic(k)) = cell2mat(infovol.wetting(k));
+                    end
                 end
             end
         end
+        wetting_resized(Nanoporosity_resized==0)=0;
 
         if ~isempty(Diffusivity)
             if strcmp(infovol.poretransport_representation,'Diffusivity D (heterogeneous)')
@@ -179,10 +185,12 @@ for current_iteration=1:1:number_resize
         end
         n_voxel = voxel_number - n_voxel_background;
 
-        if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore_idealwetting, vf_pore_partialwetting, vf_air]
+        if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore, vf_liquid, vf_gas, vf_AM]
+            nvoxel.AM = 0;
             nvoxel.solid = 0;
-            nvoxel.pore_idealwetting = 0;
-            nvoxel.pore_partialwetting = 0;
+            nvoxel.pore = 0;
+            nvoxel.liquid = 0;
+            nvoxel.gas = 0;
         end
 
         % Volume fraction label-wise
@@ -190,29 +198,29 @@ for current_iteration=1:1:number_resize
         for current_domain=1:number_domain % Loop over all phases
             time_cpu_start_phase = cputime; % CPU start
             time_clock_start_phase = tic; % Stopwatch start
-            [~,vf,~,n] = Charact_Volumefractions_algorithm(Mlabel_resized, pMET.metric(1).domain_label(current_domain), n_voxel, Nanoporosity_resized, wetting_resized);
-            metric(1).property_voxelsizedependence(current_iteration+1,current_domain+1) = vf.phase_label;
+            [~,vf,~,n] = Charact_Volumefractions_algorithm(Mlabel_resized, pMET.metric(1).domain_label(current_domain), n_voxel, Nanoporosity_resized, wetting_resized, infovol.activematerial_identification);
+            metric(1).property_voxelsizedependence(current_iteration+1,current_domain+1) = vf.label;
             % Time
-            timedata_perphase = [timedata_perphase; [n.n_voxel_label (cputime-time_cpu_start_phase) toc(time_clock_start_phase)]];
+            timedata_perphase = [timedata_perphase; [n.label (cputime-time_cpu_start_phase) toc(time_clock_start_phase)]];
             if nMetric==2 
-                nvoxel.solid = nvoxel.solid + n.solid;
-                nvoxel.pore_idealwetting = nvoxel.pore_idealwetting + n.pore_idealwetting;
-                nvoxel.pore_partialwetting = nvoxel.pore_partialwetting + n.pore_partialwetting;
+                nvoxel.AM = nvoxel.AM + n.label_and_AM;
+                nvoxel.solid = nvoxel.solid + n.label_and_solid;
+                nvoxel.pore = nvoxel.pore + n.label_and_pore;
+                nvoxel.liquid = nvoxel.liquid + n.label_and_liquid;
+                nvoxel.gas = nvoxel.gas + n.label_and_gas;
             end
         end
-        if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore_idealwetting, vf_pore_partialwetting, vf_air]
-            vf_pore_idealwetting = nvoxel.pore_idealwetting/n_voxel;
+        if nMetric==2 % p.combined_todo==1: [vf_solid, vf_pore, vf_liquid, vf_gas, vf_AM]
+            vf_AM = nvoxel.AM/n_voxel;
             vf_solid = nvoxel.solid/n_voxel;
-            vf_pore_partialwetting = nvoxel.pore_partialwetting/n_voxel;
-            vf_air = 1 - vf_solid - vf_pore_partialwetting;
-            vf_air = min([1 vf_air]);
-            vf_air = max([0 vf_air]);
-            metric(2).property_voxelsizedependence(current_iteration+1,2:end) = [vf_solid vf_pore_idealwetting vf_pore_partialwetting vf_air];
+            vf_pore = nvoxel.pore/n_voxel;
+            vf_liquid = nvoxel.liquid/n_voxel;
+            vf_gas = nvoxel.gas/n_voxel;
+            metric(2).property_voxelsizedependence(current_iteration+1,2:end) = [vf_solid vf_pore vf_liquid vf_gas vf_AM];
         end
 
         % CPU and stopwatch time - end
         timedata_pervolume = [timedata_pervolume; [voxel_number (cputime-time_cpu_start_volume) toc(time_clock_start_volume)]];
-
 
     elseif strcmp(pMET.fct_name,'Transport')
 

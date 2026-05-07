@@ -45,8 +45,7 @@ for current_domain_todo=1:1:number_domain_todo
         Property_subdomains_statistics(group_subdomain,1,current_domain_todo)= GROUP_SUBDOMAIN.id(group_subdomain).equivalent_cubic_length;
         Property_subdomains_statistics(group_subdomain,2,current_domain_todo)= GROUP_SUBDOMAIN.id(group_subdomain).equivalent_square_length;
         Property_subdomains_statistics(group_subdomain,3,current_domain_todo)= GROUP_SUBDOMAIN.id(group_subdomain).length;
-
-        Property_subdomains_statistics(group_subdomain,4,current_domain_todo)=number_subdomain_withingroup;
+        Property_subdomains_statistics(group_subdomain,4,current_domain_todo)=number_subdomain_withingroup - sum(isnan(value_tmp));
         Property_subdomains_statistics(group_subdomain,5,current_domain_todo)=mean(value_tmp,"omitnan");
         Property_subdomains_statistics(group_subdomain,6,current_domain_todo)=std(value_tmp,"omitnan");
         Property_subdomains_statistics(group_subdomain,7,current_domain_todo)=Property_subdomains_statistics(group_subdomain,6,current_domain_todo)*100/Property_subdomains_statistics(group_subdomain,5,current_domain_todo);
@@ -128,12 +127,18 @@ if strcmp(pRVE.analysis,'Independent subvolumes')
                             Size_RVE(k_threshold,current_domain_todo,2,k_size) = 0;
                             Size_RVE(k_threshold,current_domain_todo,3,k_size) = tmp(end,idx_size(k_size));
                         else % RVE =
-                            x1 = tmp(idx(end),idx_size(k_size)); x2 = tmp(idx(end)+1,idx_size(k_size)); 
-                            y1 = tmp(idx(end),idx_threshold); y2 = tmp(idx(end)+1,idx_threshold); 
-                            x = interp1([y1 y2],[x1 x2],thresholds(k_threshold),'linear');
-                            Size_RVE(k_threshold,current_domain_todo,1,k_size) = 0;
-                            Size_RVE(k_threshold,current_domain_todo,2,k_size) = x;
-                            Size_RVE(k_threshold,current_domain_todo,3,k_size) = 0;                            
+                            x1 = tmp(idx(end),idx_size(k_size)); x2 = tmp(idx(end)+1,idx_size(k_size));
+                            y1 = tmp(idx(end),idx_threshold); y2 = tmp(idx(end)+1,idx_threshold);
+                            if ~isnan(x1) && ~isnan(x2) && ~isnan(y1) && ~isnan(y2)
+                                x = interp1([y1 y2],[x1 x2],thresholds(k_threshold),'linear');
+                                Size_RVE(k_threshold,current_domain_todo,1,k_size) = 0;
+                                Size_RVE(k_threshold,current_domain_todo,2,k_size) = x;
+                                Size_RVE(k_threshold,current_domain_todo,3,k_size) = 0;
+                            else
+                                Size_RVE(k_threshold,current_domain_todo,1,k_size) = 0;
+                                Size_RVE(k_threshold,current_domain_todo,2,k_size) = NaN;
+                                Size_RVE(k_threshold,current_domain_todo,3,k_size) = 0;
+                            end
                         end
                     else % RVE <
                         Size_RVE(k_threshold,current_domain_todo,1,k_size) = tmp(1,idx_size(k_size));

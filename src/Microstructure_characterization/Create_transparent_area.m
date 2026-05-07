@@ -3,6 +3,7 @@ function [x2,inBetween] = Create_transparent_area(x,y_above,y_below)
 % And then add in your plot:
 % h_=fill(x2, inBetween, 'r');
 % set(h_,'LineStyle','none','FaceAlpha',0.25);
+% h_.Annotation.LegendInformation.IconDisplayStyle = 'off'; % No legend
 
 x = reshape(x,[1 length(x)]);
 y_above = reshape(y_above,[1 length(y_above)]);

@@ -614,7 +614,6 @@ for kseq = 1:1:length(seq)
 
         %% CLIPPING
         if isfield(seq(kseq),'clipping') && ~isempty(seq(kseq).clipping)
-
             pp.change_is = seq(kseq).clipping_change_is;
             pp.profile = seq(kseq).clipping_profile;
             pp.sens = seq(kseq).clipping_sens;
@@ -801,6 +800,15 @@ for kseq = 1:1:length(seq)
                             x1s(kframe) = min([sz(1) x1s(kframe)]);
                             y1s(kframe) = min([sz(2) y1s(kframe)]);
                             z1s(kframe) = min([sz(3) z1s(kframe)]);
+
+                            sz2 = size(Img(k).modified_forcolormap);
+                            x1s(kframe) = min([sz2(1) x1s(kframe)]);
+                            y1s(kframe) = min([sz2(2) y1s(kframe)]);
+                            z1s(kframe) = min([sz2(3) z1s(kframe)]);    
+
+                            x0 = min([x0 sz(1)]); x0 = min([x0 sz2(1)]); 
+                            y0 = min([y0 sz(2)]); y0 = min([y0 sz2(2)]);                             
+                            z0 = min([z0 sz(3)]); z0 = min([z0 sz2(3)]); 
 
                             if seq(kseq).vol(kchildren).orthogonal
                                 xst = min([x0, x1s(kframe)]); xend = max([x0, x1s(kframe)]);

@@ -113,7 +113,13 @@ for dim=1:1:dimension
     h_min= plot(x_um,y_min, 'Color', 'b','LineStyle','--','LineWidth',1,'DisplayName','Min');
     h_max= plot(x_um,y_max, 'Color', 'r','LineStyle','--','LineWidth',1,'DisplayName','Max');
 
-    id_NaN = unique([find(isnan(y_mean)); find(isnan(y_std))]);
+    tmp1 = find(isnan(y_mean));
+    tmp1 = reshape(tmp1,[numel(tmp1),1]);
+    tmp2 = find(isnan(y_std));
+    tmp2 = reshape(tmp2,[numel(tmp2),1]);    
+    id_NaN = unique([tmp1; tmp2]);
+
+    %id_NaN = unique([find(isnan(y_mean)); find(isnan(y_std))]);
     x_tmp = x_um; y_mean_tmp= y_mean;  y_std_tmp= y_std;
     x_tmp(id_NaN)=[]; y_mean_tmp(id_NaN)=[]; y_std_tmp(id_NaN)=[];
 

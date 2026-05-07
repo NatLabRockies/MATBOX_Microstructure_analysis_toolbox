@@ -6,7 +6,7 @@ function [Label_downsized, Array_downsized] = function_downscaling_perlabel(Labe
 %          1 1 1 1                 0   0   0 0
 %          1 1 1 1]                0   0   0 0];
 %
-% Label_downsized = [0 1   and Array_downsized = [0.8 0   and not: [0.6 0 
+% Label_downsized = [0 1   and Array_downsized = [0.8 0   and not: [0.6 0
 %                    1 1]                         0   0]            0   0];
 
 sz = size(Label);
@@ -50,8 +50,19 @@ for k=1:length(ids)
         sub_label = Label(xmin:xmax,ymin:ymax,zmin:zmax);
         sub_array = Array(xmin:xmax,ymin:ymax,zmin:zmax);
         sub_idx = sub_label==ids(k);
+
         Array_downsized(idx(kk)) = mean(mean(mean( sub_array(sub_idx)  )));
     end
+end
+
+idnan = find(isnan(Array_downsized)==1);
+if ~isempty(idnan) % It can happen for very high downscaling
+    if dimension == 2
+        tmp = imresize(Array,1/p.scaling_factor,'nearest');
+    else
+        tmp = imresize3(Array,1/p.scaling_factor,'nearest');
+    end
+    Array_downsized(idnan) =  tmp(idnan);
 end
 
 end

@@ -189,14 +189,20 @@ timedata_domain = cell(number_phase_todo+1,1);
 
 % Initialization (algorithm-specific)
 % Phase-wise
-Vf_phase_label=zeros(number_phase_todo,1);
-Vf_phase_solidpart=zeros(number_phase_todo,1);
-Vf_phase_porouspart_idealwetting=zeros(number_phase_todo,1);
-Vf_phase_porouspart_partiallwetting=zeros(number_phase_todo,1);
+Vf_label=zeros(number_phase_todo,1);
+Vf_label_and_solid=zeros(number_phase_todo,1);
+Vf_label_and_pore=zeros(number_phase_todo,1);
+Vf_label_and_liquid=zeros(number_phase_todo,1);
+Vf_label_and_gas=zeros(number_phase_todo,1);
+Vf_label_and_AM=zeros(number_phase_todo,1);
+
 % Ratio
 ratio_solid=zeros(number_phase_todo,1);
-ratio_poreidealwetting=zeros(number_phase_todo,1);
-ratio_porepartialwetting=zeros(number_phase_todo,1);
+ratio_pore=zeros(number_phase_todo,1);
+ratio_liquid=zeros(number_phase_todo,1);
+ratio_gas=zeros(number_phase_todo,1);
+
+
 % Statistics
 stats_nanoporosity=zeros(number_phase_todo,6);
 stats_wetting=zeros(number_phase_todo,6);
@@ -205,9 +211,11 @@ if p.combined_todo
     nvoxel.onlypore = 0;
     nvoxel.onlysolid = 0;
     nvoxel.mixed = 0;
+    nvoxel.AM = 0;
     nvoxel.solid = 0;
-    nvoxel.pore_idealwetting = 0;
-    nvoxel.pore_partialwetting = 0;
+    nvoxel.pore = 0;
+    nvoxel.liquid = 0;
+    nvoxel.gas = 0;
 end
 
 % Background
@@ -225,19 +233,22 @@ for current_phase_todo=1:1:number_phase_todo % Loop over all phases
 
     % % Algorithm
     if Run_in_commandline
-        n.n_voxel_label = sum(sum(sum( Labels==phaselabel_todo(current_phase_todo,1) )));
-        Vf_phase_label(current_phase_todo,1) = n.n_voxel_label / n_voxel;
+        n.label = sum(sum(sum( Labels==phaselabel_todo(current_phase_todo,1) )));
+        Vf_label(current_phase_todo,1) = n.label / n_voxel;
     else
-        [st,vf,r,n] = Charact_Volumefractions_algorithm(Labels, phaselabel_todo(current_phase_todo,1), n_voxel, Nanoporosity, Wetting);
+        [st,vf,r,n] = Charact_Volumefractions_algorithm(Labels, phaselabel_todo(current_phase_todo,1), n_voxel, Nanoporosity, Wetting, infovol.activematerial_identification);
 
-        Vf_phase_label(current_phase_todo,1) = vf.phase_label;
-        Vf_phase_solidpart(current_phase_todo,1) = vf.phase_solid;
-        Vf_phase_porouspart_idealwetting(current_phase_todo,1) = vf.phase_pore_idealwetting;
-        Vf_phase_porouspart_partiallwetting(current_phase_todo,1) = vf.phase_pore_partialwetting;
-
-        ratio_solid(current_phase_todo,1) = r.solid;
-        ratio_poreidealwetting(current_phase_todo,1) = r.poreidealwetting;
-        ratio_porepartialwetting(current_phase_todo,1) = r.porepartialwetting;
+        Vf_label(current_phase_todo,1) = vf.label;
+        Vf_label_and_solid(current_phase_todo,1) = vf.label_and_solid;
+        Vf_label_and_pore(current_phase_todo,1) = vf.label_and_pore;
+        Vf_label_and_liquid(current_phase_todo,1) = vf.label_and_liquid;
+        Vf_label_and_gas(current_phase_todo,1) = vf.label_and_gas;
+        Vf_label_and_AM(current_phase_todo,1) = vf.label_and_AM;
+        
+        ratio_solid(current_phase_todo,1) = r.label_solidpart;
+        ratio_pore(current_phase_todo,1) = r.label_porepart;
+        ratio_liquid(current_phase_todo,1) = r.label_liquidpart;
+        ratio_gas(current_phase_todo,1) = r.label_gaspart;
 
         stats_nanoporosity(current_phase_todo,:) = st.nanoporosity;
         stats_wetting(current_phase_todo,:) = st.wetting;
@@ -246,18 +257,22 @@ for current_phase_todo=1:1:number_phase_todo % Loop over all phases
             nvoxel.onlypore = nvoxel.onlypore + n.onlypore;
             nvoxel.onlysolid = nvoxel.onlysolid + n.onlysolid;
             nvoxel.mixed = nvoxel.mixed + n.mixed;
-            nvoxel.solid = nvoxel.solid + n.solid;
-            nvoxel.pore_idealwetting = nvoxel.pore_idealwetting + n.pore_idealwetting;
-            nvoxel.pore_partialwetting = nvoxel.pore_partialwetting + n.pore_partialwetting;
+
+            nvoxel.AM = nvoxel.AM + n.label_and_AM;
+
+            nvoxel.solid = nvoxel.solid + n.label_and_solid;
+            nvoxel.pore = nvoxel.pore + n.label_and_pore;
+            nvoxel.liquid = nvoxel.liquid + n.label_and_liquid;
+            nvoxel.gas = nvoxel.gas + n.label_and_gas;
         end
 
         % % Correlation
-        results_correlation(current_phase_todo).volume_fraction = Vf_phase_label(current_phase_todo,1); % Save for correlation
+        results_correlation(current_phase_todo).volume_fraction = Vf_label(current_phase_todo,1); % Save for correlation
     end
 
     % Time
     timedata_domain(current_phase_todo+1,1) = phasename_todo(current_phase_todo,1);
-    timedata(current_phase_todo+1,1) = n.n_voxel_label;
+    timedata(current_phase_todo+1,1) = n.label;
     timedata(current_phase_todo+1,2) = cputime-time_cpu_start_phase; % CPU elapsed time
     timedata(current_phase_todo+1,3) = toc(time_clock_start_phase); % CPU elapsed time
 end
@@ -268,36 +283,43 @@ if p.combined_todo && ~isempty(Nanoporosity)
     vf_onlysolid = nvoxel.onlysolid/n_voxel;
     vf_mixed = nvoxel.mixed/n_voxel;
 
-    % Porosity, solid, and air
-    vf_pore_idealwetting = nvoxel.pore_idealwetting/n_voxel;
+    vf_AM = nvoxel.AM/n_voxel;
+
+    % Porosity, solid, liquid, and air
     vf_solid = nvoxel.solid/n_voxel;
+    vf_pore = nvoxel.pore/n_voxel;
+    vf_liquid = nvoxel.liquid/n_voxel;
+    vf_gas = nvoxel.gas/n_voxel;
 
     current_phase_todo=current_phase_todo+1;
     results_correlation(current_phase_todo).name = 'Solid (combined)';
     results_correlation(current_phase_todo).domain_length = voxel_number^(1/number_dimension) * voxel_size;
     results_correlation(current_phase_todo).voxel_size = voxel_size;
     results_correlation(current_phase_todo).volume_fraction = vf_solid;
-    current_phase_todo=current_phase_todo+1;
-    results_correlation(current_phase_todo).name = 'Porosity (combined, ideal wetting)';
-    results_correlation(current_phase_todo).domain_length = voxel_number^(1/number_dimension) * voxel_size;
-    results_correlation(current_phase_todo).voxel_size = voxel_size;
-    results_correlation(current_phase_todo).volume_fraction = vf_pore_idealwetting;
-
-    vf_pore_partialwetting = nvoxel.pore_partialwetting/n_voxel;
-    results_correlation(current_phase_todo+1).volume_fraction = vf_pore_partialwetting;
-    vf_air = 1-vf_solid-vf_pore_partialwetting;
 
     current_phase_todo=current_phase_todo+1;
-    results_correlation(current_phase_todo).name = 'Porosity (combined, partial wetting)';
+    results_correlation(current_phase_todo).name = 'Porosity (combined)';
     results_correlation(current_phase_todo).domain_length = voxel_number^(1/number_dimension) * voxel_size;
     results_correlation(current_phase_todo).voxel_size = voxel_size;
-    results_correlation(current_phase_todo).volume_fraction = vf_pore_partialwetting;
+    results_correlation(current_phase_todo).volume_fraction = vf_pore;
 
     current_phase_todo=current_phase_todo+1;
-    results_correlation(current_phase_todo).name = 'Air saturation';
+    results_correlation(current_phase_todo).name = 'Liquid (combined)';
     results_correlation(current_phase_todo).domain_length = voxel_number^(1/number_dimension) * voxel_size;
     results_correlation(current_phase_todo).voxel_size = voxel_size;
-    results_correlation(current_phase_todo).volume_fraction = vf_air;
+    results_correlation(current_phase_todo).volume_fraction = vf_liquid;    
+
+    current_phase_todo=current_phase_todo+1;
+    results_correlation(current_phase_todo).name = 'Gas (combined)';
+    results_correlation(current_phase_todo).domain_length = voxel_number^(1/number_dimension) * voxel_size;
+    results_correlation(current_phase_todo).voxel_size = voxel_size;
+    results_correlation(current_phase_todo).volume_fraction = vf_gas;     
+
+    current_phase_todo=current_phase_todo+1;
+    results_correlation(current_phase_todo).name = 'Active material (combined)';
+    results_correlation(current_phase_todo).domain_length = voxel_number^(1/number_dimension) * voxel_size;
+    results_correlation(current_phase_todo).voxel_size = voxel_size;
+    results_correlation(current_phase_todo).volume_fraction = vf_AM;     
 end
 
 % CPU and stopwatch time - end
@@ -318,7 +340,7 @@ if Run_in_commandline || isempty(Nanoporosity)
     rownames = {'label';'Volume fraction (label)'};
     C = zeros(length(rownames),number_phase_todo);
     C(1,:) = phaselabel_todo';
-    C(2,:) = Vf_phase_label';
+    C(2,:) = Vf_label';
     Table_Volumefraction_perlabel = array2table(C,"VariableNames",phasename_todo',"RowNames",rownames);
     Results_Volumefraction.Table_Volumefraction_perlabel = Table_Volumefraction_perlabel;
     idx_wetting_is_relevant = [];
@@ -342,23 +364,28 @@ else
     Table_wetting_perlabel = array2table(tmp',"VariableNames",phasename_todo',"RowNames",rownames);
 
     % Per label
-    rownames = {'label';'Volume fraction (label)';'Ratio (solid)';'Volume fraction (solid)';'Ratio (pore, ideal wetting)';'Ratio (pore, partial wetting)';'Volume fraction (pore, ideal wetting)';'Volume fraction (pore, partial wetting)'};
+    rownames = {'label';'Ratio (solid)';'Ratio (pore)';'Ratio (liquid)';'Ratio (gas)';'Volume fraction (label)';'Volume fraction (solid)';'Volume fraction (pore)';'Volume fraction (liquid)';'Volume fraction (gas)';'Volume fraction (AM)'};
     C = zeros(length(rownames),number_phase_todo);
     C(1,:) = phaselabel_todo';
-    C(2,:) = Vf_phase_label';
-    C(3,:) = ratio_solid';
-    C(4,:) = Vf_phase_solidpart';
-    C(5,:) = ratio_poreidealwetting';
-    C(6,:) = ratio_porepartialwetting';
-    C(7,:) = Vf_phase_porouspart_idealwetting';
-    C(8,:) = Vf_phase_porouspart_partiallwetting';
+    C(2,:) = ratio_solid';
+    C(3,:) = ratio_pore';
+    C(4,:) = ratio_liquid';
+    C(5,:) = ratio_gas';
+
+    C(6,:) = Vf_label';
+    C(7,:) = Vf_label_and_solid';    
+    C(8,:) = Vf_label_and_pore';    
+    C(9,:) = Vf_label_and_liquid';    
+    C(10,:) = Vf_label_and_gas';    
+    C(11,:) = Vf_label_and_AM';    
+
     Table_Volumefraction_perlabel = array2table(C,"VariableNames",phasename_todo',"RowNames",rownames);
     Results_Volumefraction.Table_Volumefraction_perlabel = Table_Volumefraction_perlabel;
     
     % Combined volume fraction
     if p.combined_todo
-        names = {'category: only solid';'category: only pore';'category: mixed';'Solid';'Pore (ideal wetting)';'Pore (partial wetting)';'Air'};
-        vf_combined = num2cell([vf_onlysolid;vf_onlypore;vf_mixed;vf_solid;vf_pore_idealwetting;vf_pore_partialwetting;vf_air]);
+        names = {'Solid';'Pore';'Liquid';'Gas';'Active material';'category: only solid';'category: only pore';'category: mixed';};
+        vf_combined = num2cell([vf_solid;vf_pore;vf_liquid;vf_gas;vf_AM;vf_onlysolid;vf_onlypore;vf_mixed;]);
         Table_Volumefraction_combined = cell2table([names,vf_combined],"VariableNames",{'Combined phase' 'Volume fraction'});
         Results_Volumefraction.Table_Volumefraction_combined = Table_Volumefraction_combined;        
     end
@@ -412,13 +439,18 @@ if ~Run_in_commandline && ~isempty(Nanoporosity)
     disp(Table_wetting_perlabel)
 end
 fprintf('  Volume fractions and ratios per phase:\n');
+fprintf('     Ratios          : normalized with label volume, per phase: solid + pore = 1, and solid + liquid + gas = 1)\n');
+fprintf('     Volume fractions: normalized with FOV volume, sum volume fraction(label) = 1\n');
+fprintf('                                                   volume fraction(label) = Volume fraction (solid) + Volume fraction (pore)\n');
+fprintf('                                                   volume fraction(label) = Volume fraction (solid) + Volume fraction (liquid) + Volume fraction (gas)\n');
+
 disp(Table_Volumefraction_perlabel)
 if p.combined_todo
     fprintf('  Volume fractions from the combined analysis of all phases:\n');
     fprintf('     Categories: voxels are either purely solid (nanoporosity=0), purely porous (nanoporosity=1), or mixed (nanoporosity ]0,1[. Sum(category)=1\n');
-    fprintf('     Solid: mean(1-Nanoporosity), Pore(ideal wetting): mean(Nanoporosity), Pore(partial wetting): mean(Nanoporosity.*wetting)\n');
-    fprintf('        Solid + Pore(ideal wetting) = 1\n');
-    fprintf('        Solid + Pore(partial wetting) + Air = 1\n');
+    fprintf('     Solid: mean(1-Nanoporosity), Pore: mean(Nanoporosity), Liquid: mean(Nanoporosity.*wetting), Gas: mean(Nanoporosity.*(1-wetting))\n');
+    fprintf('        Solid + Pore = 1\n');
+    fprintf('        Solid + Liquid + Gas = 1\n');
     disp(Table_Volumefraction_combined)
 end
 fprintf('Computation time, in seconds:\n\n');
@@ -430,7 +462,7 @@ pars.array_unit = '';
 pars.plots = {'bar','pie'};
 pars.pie_in_percents = true;
 pars.inputfilename = infovol.filename;
-plot_avg_perphase(phasename_todo,phasecolor_todo,Vf_phase_label,pars,opt.format,opt.save,Current_folder,'Volume_fractions_labels');
+plot_avg_perphase(phasename_todo,phasecolor_todo,Vf_label,pars,opt.format,opt.save,Current_folder,'Volume_fractions_labels');
 
 if ~Run_in_commandline && p.combined_todo
     pars.array_name = 'Volume fraction (category)';
@@ -446,10 +478,11 @@ if ~Run_in_commandline && p.combined_todo
     pars.pie_in_percents = true;
     pars.inputfilename = infovol.filename;
     col_solid = [0.4902 0.8549 0.3451];
-    col_liquid_partial = [0.3647 0.8863 0.9059];
-    col_liquid_ideal = [0.0660    0.4430    0.7450];
+    col_liquid = [0.3647 0.8863 0.9059];
+    col_pore = [0.0660    0.4430    0.7450];
     col_air = [0.85 0.85 0.85];
-    plot_avg_perphase([{'Solid'} {'Liquid'} {'Air'}],[col_solid; col_liquid_partial; col_air],[vf_solid vf_pore_partialwetting vf_air],pars,opt.format,opt.save,Current_folder,'Volume_fractions_state');
+    col_AM = [1.0 0.0 0.0];
+    plot_avg_perphase([{'Solid'} {'Liquid'} {'Gas'}],[col_solid; col_liquid; col_air],[vf_solid vf_liquid vf_gas],pars,opt.format,opt.save,Current_folder,'Volume_fractions_state');
 end
 
 %% PLOT NANOPOROSITY AND WETTING
@@ -463,11 +496,9 @@ if ~Run_in_commandline && ~isempty(Nanoporosity)
     pars.array_unit = '';
     plot_distribution_perphase(Labels,phaselabel_todo,phasename_todo,phasecolor_todo,Nanoporosity,stats_nanoporosity,pars,opt.format,opt.save,Current_folder,'Nanoporosity_labelwise');
 
-    if ~strcmp(infovol.partial_wetting_representation,'Ideal')
-        pars.array_name = 'Wetting';
-        pars.array_unit = '';
-        plot_distribution_perphase(Labels,phaselabel_todo_wettingisrelevant,phasename_todo_wettingisrelevant,phasecolor_wettingisrelevant,Wetting,stats_wettingisrelevant,pars,opt.format,opt.save,Current_folder,'Wetting_labelwise');
-    end
+    pars.array_name = 'Wetting';
+    pars.array_unit = '';
+    plot_distribution_perphase(Labels,phaselabel_todo_wettingisrelevant,phasename_todo_wettingisrelevant,phasecolor_wettingisrelevant,Wetting,stats_wettingisrelevant,pars,opt.format,opt.save,Current_folder,'Wetting_labelwise');
 end
 
 %%
@@ -482,8 +513,8 @@ if sum(p.plotdirections)>0
     group(1).yaxis_name = 'Volume fraction'; 
     group(1).yaxis_unit = '';
     group(1).yaxis_round = 3;    
-    group(1).filename = 'Volume_fractions_along_axis';
-    group(1).mean = Vf_phase_label;
+    group(1).filename = 'Volume_fractions_label_along_axis';
+    group(1).mean = Vf_label;
 
     if ~Run_in_commandline && ~isempty(Nanoporosity)
         group(2).yaxis_name = 'Nanoporosity';
@@ -504,7 +535,7 @@ if sum(p.plotdirections)>0
             group(4).yaxis_unit = '';
             group(4).yaxis_round = 3;
             group(4).filename = 'Volume_fractions_combined_along_axis';
-            group(4).mean = [vf_solid vf_pore_idealwetting vf_pore_partialwetting vf_air];
+            group(4).mean = [vf_solid vf_pore vf_liquid vf_gas vf_AM];
         end
     end    
 
@@ -548,8 +579,10 @@ if sum(p.plotdirections)>0
                 % Combined phase
                 if p.combined_todo
                     nvoxel_.solid = 0;
-                    nvoxel_.pore_idealwetting = 0;
-                    nvoxel_.pore_partialwetting = 0;
+                    nvoxel_.pore = 0;
+                    nvoxel_.liquid = 0;
+                    nvoxel_.gas = 0;
+                    nvoxel_.AM = 0;
                 end
                 % Background
                 n_voxel_background = 0;
@@ -566,8 +599,8 @@ if sum(p.plotdirections)>0
                         group(1).direction(dd).array(current_phase_todo).color = phasecolor_todo(current_phase_todo,:);
                         group(1).direction(dd).array(current_phase_todo).linestyle = '-';
                     else
-                        [st_,vf_,r_,n_] = Charact_Volumefractions_algorithm(sl_label, phaselabel_todo(current_phase_todo,1), n_voxel, sl_Nanoporosity, sl_Wetting);
-                        group(1).direction(dd).array(current_phase_todo).vals(x) = vf_.phase_label;
+                        [st_,vf_,r_,n_] = Charact_Volumefractions_algorithm(sl_label, phaselabel_todo(current_phase_todo,1), n_voxel, sl_Nanoporosity, sl_Wetting, infovol.activematerial_identification);
+                        group(1).direction(dd).array(current_phase_todo).vals(x) = vf_.label;
                         group(1).direction(dd).array(current_phase_todo).name = char(phasename_todo(current_phase_todo));
                         group(1).direction(dd).array(current_phase_todo).color = phasecolor_todo(current_phase_todo,:);
                         group(1).direction(dd).array(current_phase_todo).linestyle = '-';
@@ -588,9 +621,11 @@ if sum(p.plotdirections)>0
                             group(3).direction(dd).array(current_phase_todo).color = phasecolor_todo(current_phase_todo,:);
 
                             if p.combined_todo
-                                nvoxel_.solid = nvoxel_.solid + n_.solid;
-                                nvoxel_.pore_idealwetting = nvoxel_.pore_idealwetting + n_.pore_idealwetting;
-                                nvoxel_.pore_partialwetting = nvoxel_.pore_partialwetting + n_.pore_partialwetting;
+                                nvoxel_.solid = nvoxel_.solid + n_.label_and_solid;
+                                nvoxel_.pore = nvoxel_.pore + n_.label_and_pore;
+                                nvoxel_.liquid = nvoxel_.liquid + n_.label_and_liquid;
+                                nvoxel_.gas = nvoxel_.gas + n_.label_and_gas;
+                                nvoxel_.AM = nvoxel_.AM + n_.label_and_AM;
                             end
                         end
 
@@ -607,14 +642,37 @@ if sum(p.plotdirections)>0
                 if ~Run_in_commandline
                     if p.combined_todo
                         % Porosity, solid, and air
-                        vf_pore_idealwetting_ = nvoxel_.pore_idealwetting/n_voxel;
                         vf_solid_ = nvoxel_.solid/n_voxel;
-                        vf_pore_partialwetting_ = nvoxel_.pore_partialwetting/n_voxel;
-                        vf_air_ = 1 - vf_solid_ - vf_pore_partialwetting_;
-                        group(4).direction(dd).array(1).vals(x) = vf_solid_; group(4).direction(dd).array(2).vals(x) = vf_pore_idealwetting_; group(4).direction(dd).array(3).vals(x) = vf_pore_partialwetting_; group(4).direction(dd).array(4).vals(x) = vf_air_;
-                        group(4).direction(dd).array(1).name = 'Solid'; group(4).direction(dd).array(2).name = 'Liquid (ideal wetting)'; group(4).direction(dd).array(3).name = 'Liquid (partial wetting)'; group(4).direction(dd).array(4).name = 'Air';
-                        group(4).direction(dd).array(1).color = col_solid; group(4).direction(dd).array(2).color = col_liquid_ideal; group(4).direction(dd).array(3).color = col_liquid_partial; group(4).direction(dd).array(4).color = col_air;
-                        group(4).direction(dd).array(1).linestyle = '-'; group(4).direction(dd).array(2).linestyle = ':'; group(4).direction(dd).array(3).linestyle = '-'; group(4).direction(dd).array(4).linestyle = '-';
+                        vf_pore_ = nvoxel_.pore/n_voxel;
+                        vf_liquid_ = nvoxel_.liquid/n_voxel;
+                        vf_gas_ = nvoxel_.gas/n_voxel;
+                        vf_AM_ = nvoxel_.AM/n_voxel;
+
+                        group(4).direction(dd).array(1).vals(x) = vf_solid_;
+                        group(4).direction(dd).array(1).name = 'Solid';
+                        group(4).direction(dd).array(1).color = col_solid;
+                        group(4).direction(dd).array(1).linestyle = '-';
+
+                        group(4).direction(dd).array(2).vals(x) = vf_liquid_;
+                        group(4).direction(dd).array(2).name = 'Liquid';
+                        group(4).direction(dd).array(2).color = col_liquid;
+                        group(4).direction(dd).array(2).linestyle = '-';                        
+
+                        group(4).direction(dd).array(3).vals(x) = vf_gas_;
+                        group(4).direction(dd).array(3).name = 'Gas';
+                        group(4).direction(dd).array(3).color = col_air;
+                        group(4).direction(dd).array(3).linestyle = '-';                        
+
+                        group(4).direction(dd).array(4).vals(x) = vf_pore_;
+                        group(4).direction(dd).array(4).name = 'Pore';
+                        group(4).direction(dd).array(4).color = col_pore;
+                        group(4).direction(dd).array(4).linestyle = '-.';
+
+                        group(4).direction(dd).array(5).vals(x) = vf_AM_;
+                        group(4).direction(dd).array(5).name = 'Active material';
+                        group(4).direction(dd).array(5).color = col_AM;
+                        group(4).direction(dd).array(5).linestyle = ':';
+                           
                     end
                 end
             end
@@ -625,6 +683,7 @@ if sum(p.plotdirections)>0
     %% TABLE AND PLOT
     plot_along_direction(group,direction,opt.format,opt.save,Current_folder);
 end
+
 
 %%
 %% ERROR ANALYSIS: IMAGE RESOLUTION and REPRESENTATIVITY
@@ -637,23 +696,23 @@ if ~isempty(p.scaling) || p.RVE.number_RVE>0
     pMET.fct_name = 'Volume fraction';
     pMET.inputfilename = infovol.filename;
     pMET.fractal_bertei = p.fractal_bertei.todo;
-    pMET.metric(1).filename = 'Volume_fractions';
-    pMET.metric(1).name = 'Volume fraction';
+    pMET.metric(1).filename = 'Vf_label';
+    pMET.metric(1).name = 'Volume fraction (label)';
     pMET.metric(1).shortname_correlation = 'vf';
     pMET.metric(1).unit = [];
     pMET.metric(1).domain_name = phasename_todo;
     pMET.metric(1).domain_label = phaselabel_todo;
     pMET.metric(1).domain_color = phasecolor_todo;
-    pMET.metric(1).result_initial = Vf_phase_label;
+    pMET.metric(1).result_initial = Vf_label;
     pMET.metric(1).scaling_extrapolation = p.scaling_extrapolation;    
     if p.combined_todo
-        pMET.metric(2).filename = 'Volume_fractions_combined';
+        pMET.metric(2).filename = 'Vf_combined';
         pMET.metric(2).name = 'Volume fraction (combined)';
         pMET.metric(2).shortname_correlation = 'vf';
         pMET.metric(2).unit = [];
-        pMET.metric(2).domain_name = [{'Solid'}; {'Liquid (ideal wetting)'}; {'Liquid (partial wetting)'}; {'Air'}];
-        pMET.metric(2).domain_color = [col_solid; col_liquid_ideal; col_liquid_partial; col_air];
-        pMET.metric(2).result_initial = [vf_solid; vf_pore_idealwetting; vf_pore_partialwetting; vf_air];
+        pMET.metric(2).domain_name = [{'Solid'}; {'Pore'}; {'Liquid'}; {'Gas'}; {'Active material'}];
+        pMET.metric(2).domain_color = [col_solid; col_pore; col_liquid; col_air; col_AM];
+        pMET.metric(2).result_initial = [vf_solid; vf_pore; vf_liquid; vf_gas; vf_AM];
         pMET.metric(2).scaling_extrapolation = p.scaling_extrapolation;       
     end
 end
