@@ -16,7 +16,16 @@ approximate = false; % legacy
 % We use the matlab built-in function bwdist to calculate the distance transform (euclidean)
 % bwdist(BW) : For each pixel in BW, the distance transform assigns a number that is the distance between that pixel and the nearest nonzero pixel of BW
 % then, bwdist(~BW,'euclidean') :
-[dmap, IDX] = bwdist(~BW,'euclidean');
+v = version('-release');
+if strcmp(v,'2025b') || strcmp(v,'2026a')
+    dmap = bwdist(~BW,'euclidean');
+    IDX = [];
+    % Error using bwdist (line 166)
+    % Binary images with more than 2^24 pixels do not support index array output.
+else
+    [dmap, IDX] = bwdist(~BW,'euclidean');
+end
+
 if roundvalues
     if ~isempty(round_digit)
         dmap=round(dmap,round_digit);
