@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: "Segoe UI", system-ui, sans-serif; font-size: 13px; line-height: 1.5; margin: 16px 20px; color: #222; }
+  h1 { font-size: 20px; margin: 0 0 10px; }
+  h2 { font-size: 15px; margin: 24px 0 6px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+  h3 { font-size: 13px; margin: 14px 0 4px; }
+  pre { background: #f4f4f4; border: 1px solid #ddd; padding: 8px 10px; overflow-x: auto; font-size: 12px; }
+  code { background: #f4f4f4; padding: 1px 4px; }
+  td, th { padding: 3px 12px 3px 0; vertical-align: top; text-align: left; }
+  .note { background: #fff8e1; border-left: 3px solid #f0b400; padding: 6px 10px; }
+</style>
+</head>
+<body>
+<h1>Help</h1>
+
+<h2>Using the app</h2>
+<ol>
+  <li><b>Model and device</b> (optional): choose the model, device and precision. The model loads automatically
+      on your first click otherwise.</li>
+  <li><b>Segmentation</b>: three ways to prompt SAM, all on the slice shown.
+    <ul>
+      <li><b>Click mode: Refine one object</b>: several clicks shape one object. Left-click includes (green +),
+          right-click or Shift+click excludes (red ×). Then <i>Add object</i> (Enter).</li>
+      <li><b>Click mode: One object per click</b>: each left-click segments its own object from that single point.
+          In 2D it is added immediately (click through all grains in a row); right-click on an object deletes it,
+          Ctrl+Z removes the newest. In 3D mode each click creates a <i>pending</i> object.</li>
+      <li><b>Text prompt</b>: type a short noun phrase ("grain", "particle", "cell", "wheel") and press <b>Find all</b>.
+          SAM 3 returns every instance above <i>Text min score</i> as pending objects; right-click removes wrong ones,
+          then <i>Add object</i> (2D) or <i>Propagate</i> (3D). Works best for concepts that look like everyday photos;
+          on unusual imagery (e.g. electron microscopy, MRI) lower Text min score or use clicks.</li>
+    </ul>
+    <table>
+      <tr><td>Enter / <i>Add object</i></td><td>keep the current mask, or all pending objects</td></tr>
+      <tr><td>Ctrl+Z / <i>Undo point</i></td><td>remove the last click, pending object, or (one-per-click 2D) the newest object</td></tr>
+      <tr><td>Esc / <i>Clear points</i></td><td>discard the current clicks and pending objects</td></tr>
+      <tr><td>Mouse wheel</td><td>zoom</td></tr>
+      <tr><td>Keep objects in one piece</td><td>(on by default) removes disconnected fragments from new masks: the piece under the click is kept in 2D, the largest piece for text results and 3D propagation.</td></tr>
+      <tr><td>Object list</td><td>Two groups: <b>Selected (not propagated)</b> — clicked objects not added yet ("Clicked 1…") and objects added in 2D — and <b>Propagated (3D)</b>.
+      Entries are coloured like the overlay, grey when the object is not on the shown slice (<i>Only this slice</i> hides those), and show the object's slice range on the current axis (e.g. "y 125–137" in the XZ view).
+      Clicking an object that is not on the shown slice jumps to the middle of its range. Ctrl+click / Shift+click selects several:
+      <i>Merge selected</i> joins propagated objects; a selected (clicked or 2D) entry merged with a propagated object is <i>tied</i> to it ("→ Object 27") and, when propagated, extends that object.
+      <i>Delete</i> removes the selected objects and clicked entries; <i>Delete all not propagated</i> removes every clicked object and every object added in 2D, <i>Delete all 3D</i> every propagated object (both ask first). <b>Split</b>: select one object, press Split, click one point inside each part (2 or more; any slice), then <i>Apply split</i> or Enter (Esc cancels). The object is cut along its narrowest neck (watershed on the distance to its edge), in 2D or 3D; the first part keeps its number.</td></tr>
+      <tr><td>⟲ 90° / ⟳ 90°</td><td>rotate the view (display and clicks only; the data and exported labels are not rotated). Useful for long, thin slices.</td></tr>
+    </table>
+    The first click on a slice computes that slice's embedding (≈1.5–3 s on a GTX 1080). Later clicks on
+    the same slice take well under a second.</li>
+  <li><b>Volumes</b>: pick the view (<b>XY</b> = Z slices, <b>XZ</b>, <b>YZ</b>) and the slice (slider, number field, <b>−</b>/<b>+</b> for one slice, <b>−−</b>/<b>++</b> for a tenth of the axis). Then:
+    <ul>
+      <li><b>Current slice</b> mode: objects are 2D masks on that slice (stored in the 3D label volume).</li>
+      <li><b>3D volume</b> mode: define the object(s) on one slice (refine clicks, one-per-click, or text prompt),
+          set the slice range (<i>From</i>/<i>To</i>, default: whole volume) and press <b>Propagate</b>. SAM 3's tracker
+          follows <i>all</i> objects forward and backward through the slices in one pass, seeded by their 2D masks.
+          <b>Propagate</b> tracks only the <i>selected</i> (not yet propagated) objects: clicked objects — on any slices, each from its own slice — and objects added in 2D in this view (all of them, or the ones selected in the list); propagated objects are never re-tracked. Clicked objects stay on their slice while you browse. To segment one large object from two ends, click it on a slice near each end (e.g. 75 and 375), select both entries and <b>Merge selected</b>: they are <i>linked</i> ("⇄") and tracked as one object seeded on both slices, so they always share one label. Objects are grouped by their starting slice(s); each group is one run, so clicks on many different slices take proportionally longer. <b>Where objects touch</b> sets the rule for voxels claimed by two objects (between objects tracked together, between passes, and against objects already added): keep existing objects, let the new propagation take over, or leave those voxels empty. Check a few slices, then <b>Add object</b> (each tracked object becomes its own label). Until then the result is drawn in the objects' final colours with a <b>yellow outline</b> meaning "not added yet" (a solid yellow mask is the single object being refined).
+          Propagation can be cancelled; the slices done so far are kept.</li>
+    </ul>
+    Speed on a GTX 1080: about 1.5 s per slice in float16 (about 2.7 s in float32), almost independent of the number of objects
+    (the image encoder dominates). A 700-slice volume takes about 18 minutes for one object. Several objects are tracked together in <i>passes</i>: each object adds about 0.16 GB of GPU memory and some time (on a GTX 1080: 1 object 1.6 s/slice, 8 objects 2.5 s/slice, 16 objects 3.7 s/slice). <b>Model and device → Objects per pass</b>: <i>Auto</i> picks how many fit in the free GPU memory (shown next to it); <i>Custom</i> lets you set it. Close other GPU programs (e.g. Fiji, games, browsers with many tabs) to fit more. Limit the range to save time. The estimate under <i>Propagate</i> uses the speed of <b>this</b> computer's GPU: measured in earlier propagations (remembered per GPU and precision), otherwise estimated from the image-embedding time of your first click.</li>
+  <li><b>Export labels…</b>: a uint16 TIFF (multi-page for volumes; 0 = background, 1..N = objects) or a
+      <code>.mat</code> file with <code>labels</code>, <code>objects</code> (id, voxel count, score, mode, clicks) and the source file name.</li>
+</ol>
+<p class="note">Tips for 3D: prompt on a slice where the object is large and clear; propagation works best when the object changes
+smoothly from slice to slice. If it drifts, propagate a shorter range, or segment from a slice closer to the problem area.
+XZ/YZ views are shown with square pixels, so anisotropic voxels look stretched or squashed.</p>
+
+<h2>Setting up SAM 3 / SAM 3.1 (new computer)</h2>
+<p>Requirements: Windows or Linux, Python 3.12, git, MATLAB R2026b, an NVIDIA GPU with ≥ 8 GB (recommended; the CPU works but
+takes about 25 s per image), and a Hugging Face account.</p>
+
+<h3>1. Create the project folder and Python environment</h3>
+<pre>cd C:\Users\&lt;you&gt;\Documents\Claude\SAM3App
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install --upgrade pip</pre>
+
+<h3>2. Install PyTorch with CUDA</h3>
+<p>Pick the CUDA build that supports your GPU:</p>
+<table>
+<tr><th>GPU generation</th><th>Command</th></tr>
+<tr><td>Pascal/Volta (GTX 10xx, Titan V)</td><td><code>.venv\Scripts\python.exe -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu126</code></td></tr>
+<tr><td>Turing and newer (RTX 20xx+)</td><td><code>.venv\Scripts\python.exe -m pip install torch==2.10.0 torchvision --index-url https://download.pytorch.org/whl/cu128</code></td></tr>
+<tr><td>No NVIDIA GPU</td><td><code>.venv\Scripts\python.exe -m pip install torch==2.10.0 torchvision</code> (CPU only)</td></tr>
+</table>
+
+<h3>3. Clone and install SAM 3, plus missing dependencies</h3>
+<pre>git clone https://github.com/facebookresearch/sam3.git
+.venv\Scripts\python.exe -m pip install -e ./sam3
+.venv\Scripts\python.exe -m pip install einops pycocotools psutil "numpy&gt;=1.26,&lt;2" scikit-image "triton-windows&gt;=3.6,&lt;3.7"</pre>
+<p><code>triton-windows</code> is only needed on Windows (on Linux, <code>triton</code> comes with PyTorch). Keep numpy below 2 (sam3 requires it).</p>
+
+<h3>4. Get access to the weights (gated)</h3>
+<ol>
+  <li>While signed in to Hugging Face, open <a href="https://huggingface.co/facebook/sam3">huggingface.co/facebook/sam3</a>
+      (and <a href="https://huggingface.co/facebook/sam3.1">facebook/sam3.1</a> for SAM 3.1) and request access. Meta
+      reviews requests by hand; it can take from minutes to a day or two. Access is free.</li>
+  <li>Create a <i>read</i> token at <a href="https://huggingface.co/settings/tokens">huggingface.co/settings/tokens</a>.</li>
+  <li>Log in once: <code>.venv\Scripts\hf.exe auth login</code> (paste the token).</li>
+</ol>
+<p>The checkpoints (≈3.5 GB each) download automatically the first time a model is loaded, into
+<code>%USERPROFILE%\.cache\huggingface\hub</code> (once per computer). <b>Model and device → Store weights in app folder</b>
+copies them into <code>SAM3App\weights</code> (with the SAM License); the app then loads them from there, and a copy of the
+app folder <i>including</i> <code>weights\</code> works on another computer <b>without downloading and without a Hugging Face login</b>
+(step 4 can then be skipped).</p>
+
+<h3>5. Put the app files next to the environment</h3>
+<pre>SAM3App\
+  SAM3Segmenter.m, SAM3Segmenter.xml   (the app)
+  python\sam3_backend.py               (bridge used by the app)
+  docs\help.html, docs\about.html
+  .venv\   sam3\</pre>
+<p>Start MATLAB, <code>cd</code> into <code>SAM3App</code> and run <code>SAM3Segmenter</code>. The app configures
+<code>pyenv</code> for the <code>.venv</code> Python in <i>OutOfProcess</i> mode (MATLAB remembers this setting). To return to another Python:
+<code>terminate(pyenv); pyenv(Version="path\to\python.exe")</code>.</p>
+
+<h2>Troubleshooting</h2>
+<table>
+<tr><td><b>Why no uint8 / uint16 precision?</b></td><td>Precision is the number format of the neural network's arithmetic, not of your data.
+Every image (uint8 or uint16) is converted to 8 bits and then to normalised floating point before SAM sees it (SAM was trained on 8-bit images).
+Integer ("int8") inference is not supported by this code and would not speed up a Pascal GPU; float16 is the fast choice.</td></tr>
+<tr><td><b>pip: "certificate verify failed"</b></td><td>The network (often a corporate proxy) re-signs HTTPS traffic with a certificate that Windows trusts but pip's own list does not.
+Add <code>--use-feature=truststore</code> to each <code>pip install</code> command so pip uses the Windows certificate store, starting with
+<code>.venv\Scripts\python.exe -m pip install --upgrade pip --use-feature=truststore</code> (pip 24.2 and newer do this by default).
+If it still fails, ask IT for the proxy's root certificate (.pem) and run <code>.venv\Scripts\python.exe -m pip config set global.cert C:\path\to\root.pem</code>.</td></tr>
+<tr><td><b>"Could not access gated repo"</b></td><td>Access not approved yet, or not logged in: check <code>.venv\Scripts\hf.exe auth whoami</code>.</td></tr>
+<tr><td><b>Very slow, or more than 8 GB of GPU memory</b></td><td>On GPUs older than Ampere, keep Precision on <i>Auto</i> (float16). SAM 3.1 needs about 45 s and 9.5 GB per image on a GTX 1080; use SAM 3.</td></tr>
+<tr><td><b>"MATLAB is running another Python in-process"</b></td><td>Restart MATLAB, then start the app before using any other Python code.</td></tr>
+<tr><td><b>'sam3' resolved to a folder</b></td><td>Run <code>terminate(pyenv)</code> and start the app again.</td></tr>
+<tr><td><b>SAM 3.1 results</b></td><td>SAM 3.1 weights are only available through the repo's video predictor. For single images it tends to return the whole object and ignore exclude clicks; it is kept as an experimental option.</td></tr>
+</table>
+</body>
+</html>

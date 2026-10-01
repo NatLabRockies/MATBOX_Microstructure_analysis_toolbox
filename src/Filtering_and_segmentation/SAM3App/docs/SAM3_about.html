@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: "Segoe UI", system-ui, sans-serif; font-size: 13px; line-height: 1.5; margin: 16px 20px; color: #222; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 22px 0 6px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+  .sub { color: #666; margin-bottom: 14px; }
+  pre { background: #f4f4f4; border: 1px solid #ddd; padding: 10px; overflow-x: auto; font-size: 12px; white-space: pre-wrap; }
+  code { background: #f4f4f4; padding: 1px 4px; }
+  td { padding: 2px 12px 2px 0; vertical-align: top; }
+</style>
+</head>
+<body>
+<h1>SAM 3 Segmenter</h1>
+<div class="sub" style="margin-bottom: 4px;">Version 1.9 · MATLAB R2026b app for point-and-click segmentation of 2D images and 3D volumes (TIFF)</div>
+<div class="sub">This app specifically (not SAM itself) has been designed by Francois Usseglio-Viretta with the help of Claude Opus 5.5 at the National Laboratory of the Rockies (NLR)</div>
+
+<p>The app runs Meta's <b>Segment Anything Model 3</b> (SAM 3, and experimentally SAM 3.1) from
+<a href="https://github.com/facebookresearch/sam3">github.com/facebookresearch/sam3</a> in a local Python environment.
+You click inside an object to include it and outside to exclude, and SAM returns the mask. For volumes, the object can be
+propagated from one slice through the stack with SAM 3's memory-based tracker, treating the slices as video frames.</p>
+
+<h2>How to cite</h2>
+<p>If you use results from this app in a publication, cite the SAM 3 paper (SAM 3.1 is described in its Appendix H, "Object Multiplex"):</p>
+<p>N. Carion, L. Gustafson, Y.-T. Hu, S. Debnath, R. Hu, D. Suris, C. Ryali, K. V. Alwala, H. Khedr, A. Huang, J. Lei, T. Ma, B. Guo,
+A. Kalla, M. Marks, J. Greer, M. Wang, P. Sun, R. Rädle, T. Afouras, E. Mavroudi, K. Xu, T.-H. Wu, Y. Zhou, L. Momeni, R. Hazra,
+S. Ding, S. Vaze, F. Porcher, F. Li, S. Li, A. Kamath, H. K. Cheng, P. Dollár, N. Ravi, K. Saenko, P. Zhang, C. Feichtenhofer.
+<i>SAM 3: Segment Anything with Concepts.</i> arXiv:2511.16719, 2025.
+<a href="https://arxiv.org/abs/2511.16719">https://arxiv.org/abs/2511.16719</a></p>
+<pre>@misc{carion2025sam3segmentconcepts,
+      title={SAM 3: Segment Anything with Concepts},
+      author={Nicolas Carion and Laura Gustafson and Yuan-Ting Hu and Shoubhik Debnath and Ronghang Hu and Didac Suris and Chaitanya Ryali and Kalyan Vasudev Alwala and Haitham Khedr and Andrew Huang and Jie Lei and Tengyu Ma and Baishan Guo and Arpit Kalla and Markus Marks and Joseph Greer and Meng Wang and Peize Sun and Roman Rädle and Triantafyllos Afouras and Effrosyni Mavroudi and Katherine Xu and Tsung-Han Wu and Yu Zhou and Liliane Momeni and Rishi Hazra and Shuangrui Ding and Sagar Vaze and Francois Porcher and Feng Li and Siyuan Li and Aishwarya Kamath and Ho Kei Cheng and Piotr Dollár and Nikhila Ravi and Kate Saenko and Pengchuan Zhang and Christoph Feichtenhofer},
+      year={2025},
+      eprint={2511.16719},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2511.16719},
+}</pre>
+<p>In your methods, it also helps to state the model (SAM 3 or SAM 3.1), the checkpoint (<code>facebook/sam3</code>, <code>sam3.pt</code>),
+whether masks were refined by hand (the number of clicks per object is saved in the <code>.mat</code> export), and for volumes,
+that 3D masks were obtained by propagating a single-slice prompt with SAM 3's tracker.</p>
+
+<h2>License</h2>
+<p>The SAM 3 code and weights are distributed by Meta under the <b>SAM License</b> (royalty-free, with conditions; see
+<code>sam3/LICENSE</code>). Model weights are downloaded from Hugging Face after accepting that license.</p>
+
+<h2>Components</h2>
+<table>
+<tr><td>SAM 3 / SAM 3.1</td><td>Meta Superintelligence Labs, facebookresearch/sam3</td></tr>
+<tr><td>Deep-learning runtime</td><td>PyTorch (CUDA build), running out of process from MATLAB via <code>pyenv</code></td></tr>
+<tr><td>App</td><td>MATLAB App Designer (plain-text format), <code>SAM3Segmenter.m</code> / <code>.xml</code></td></tr>
+<tr><td>Python bridge</td><td><code>python/sam3_backend.py</code>, with runtime compatibility patches for pre-Ampere GPUs</td></tr>
+</table>
+</body>
+</html>

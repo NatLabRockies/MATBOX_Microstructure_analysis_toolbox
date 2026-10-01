@@ -18,6 +18,8 @@ viewer.GradientColor = p.gradientcolor;
 viewer.BackgroundGradient = p.gradient;
 viewer.Lighting="on";
 
+
+
 %% VOLSHOW OBJECTS
 kchildren = 0;
 for k=1:length(Img)
@@ -231,7 +233,7 @@ end
 
 %% FIRST FRAME
 video_format = 'mpeg-4';
-video_handle = VideoWriter([p.savefolder p.filename],video_format);
+video_handle = VideoWriter(fullfile(p.savefolder, p.filename),video_format);
 set(video_handle,'Quality',100); % Set video quality
 set(video_handle,'FrameRate',p.fps);
 open(video_handle);
@@ -1138,7 +1140,18 @@ for kseq = 1:1:length(seq)
 
         viewer.LightPosition(1) = new_light_pos_x(kframe);
         viewer.LightPosition(2) = new_light_pos_y(kframe);
-        viewer.LightPosition(3) = new_light_pos_z(kframe);        
+        viewer.LightPosition(3) = new_light_pos_z(kframe);       
+
+        %% ANNOTATIONS
+        if isfield(seq(kseq),'textannotation')
+            if isempty(seq(kseq).textannotation)
+                viewer.Annotations = [];
+            else
+                point1 = images.ui.graphics3d.roi.Point(label=seq(kseq).textannotation, ...
+                    Position=[0 0 0],Color="yellow");
+                viewer.Annotations = point1;
+            end
+        end
 
         %% SAVE FRAME
         waitfor(viewer,"Busy",false)

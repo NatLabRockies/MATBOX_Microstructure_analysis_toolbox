@@ -210,4 +210,9 @@ elseif strcmp(p.light_position_mode,'manual (spherical)')
     viewer.LightPosition = [x y z];
 end
 
+%% SAVE FIGURE
+if isfield(p,'fullpath')
+    exportapp(hFig,[p.fullpath '.png']);
+end
+
 end

@@ -1,0 +1,920 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<MATLABApp schemaVersion='1.0.0' release='R2026b.0' minRelease='R2026b'>
+    <UIFigure name='UIFigure'>
+        <AutoResizeChildren>'off'</AutoResizeChildren>
+        <CloseRequestFcn>UIFigureCloseRequest</CloseRequestFcn>
+        <Name>'SAM 3 Segmenter'</Name>
+        <Position>[80 80 1320 860]</Position>
+        <WindowKeyPressFcn>UIFigureWindowKeyPress</WindowKeyPressFcn>
+        <Children>
+            <GridLayout name='MainGrid'>
+                <ColumnWidth>{'1x'}</ColumnWidth>
+                <Padding>[4 4 4 4]</Padding>
+                <RowHeight>{'1x', 22}</RowHeight>
+                <RowSpacing>4</RowSpacing>
+                <Children>
+                    <TabGroup name='TabGroup'>
+                        <Layout>
+                            <Column>1</Column>
+                            <Row>1</Row>
+                        </Layout>
+                        <Children>
+                            <Tab name='SegmentTab'>
+                                <AutoResizeChildren>'off'</AutoResizeChildren>
+                                <Title>'Segmentation'</Title>
+                                <Children>
+                                    <GridLayout name='SegGrid'>
+                                        <ColumnSpacing>6</ColumnSpacing>
+                                        <ColumnWidth>{'1x', 270}</ColumnWidth>
+                                        <Padding>[6 6 6 6]</Padding>
+                                        <RowHeight>{'fit', '1x', 'fit'}</RowHeight>
+                                        <RowSpacing>6</RowSpacing>
+                                        <Children>
+                                            <UIAxes name='ImageAxes'>
+                                                <Box>'on'</Box>
+                                                <Layout>
+                                                    <Column>1</Column>
+                                                    <Row>2</Row>
+                                                </Layout>
+                                                <XTick>[]</XTick>
+                                                <YTick>[]</YTick>
+                                            </UIAxes>
+                                            <GridLayout name='SegToolGrid'>
+                                                <ColumnSpacing>6</ColumnSpacing>
+                                                <ColumnWidth>{'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit', '1x'}</ColumnWidth>
+                                                <Layout>
+                                                    <Column>[1 2]</Column>
+                                                    <Row>1</Row>
+                                                </Layout>
+                                                <Padding>[0 0 0 0]</Padding>
+                                                <RowHeight>{'fit'}</RowHeight>
+                                                <Children>
+                                                    <Button name='AddObjectButton'>
+                                                        <ButtonPushedFcn>AddObjectButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Add object'</Text>
+                                                        <Tooltip>'Keep the current mask as a new object (Enter)'</Tooltip>
+                                                    </Button>
+                                                    <Button name='UndoButton'>
+                                                        <ButtonPushedFcn>UndoButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>2</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Undo point'</Text>
+                                                        <Tooltip>'Remove the last click (Ctrl+Z)'</Tooltip>
+                                                    </Button>
+                                                    <Button name='ClearPointsButton'>
+                                                        <ButtonPushedFcn>ClearPointsButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>3</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Clear points'</Text>
+                                                        <Tooltip>'Discard the clicks and mask of the current object (Esc)'</Tooltip>
+                                                    </Button>
+                                                    <Button name='ResetButton'>
+                                                        <ButtonPushedFcn>ResetButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>4</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Reset all'</Text>
+                                                        <Tooltip>'Remove all objects and clicks'</Tooltip>
+                                                    </Button>
+                                                    <Label name='Separator1'>
+                                                        <FontColor>[0.7 0.7 0.7]</FontColor>
+                                                        <Layout>
+                                                            <Column>5</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'│'</Text>
+                                                    </Label>
+                                                    <Button name='ExportButton'>
+                                                        <ButtonPushedFcn>ExportButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>6</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Export labels and return to MATBOX (app will close)'</Text>
+                                                        <Tooltip>'Save the label image/volume (.tif) or labels + prompts (.mat)'</Tooltip>
+                                                    </Button>
+                                                    <Button name='CancelandreturntoMATBOXButton'>
+                                                        <ButtonPushedFcn>CancelandreturntoMATBOXButtonPushed</ButtonPushedFcn>
+                                                        <Layout>
+                                                            <Column>7</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Cancel and return to MATBOX'</Text>
+                                                    </Button>
+                                                </Children>
+                                            </GridLayout>
+                                            <GridLayout name='SliceGrid'>
+                                                <ColumnSpacing>8</ColumnSpacing>
+                                                <ColumnWidth>{'fit', 130, 'fit', 34, 28, '1x', 28, 34, 70, 'fit', 'fit', 'fit'}</ColumnWidth>
+                                                <Layout>
+                                                    <Column>1</Column>
+                                                    <Row>3</Row>
+                                                </Layout>
+                                                <Padding>[0 0 0 0]</Padding>
+                                                <RowHeight>{'fit'}</RowHeight>
+                                                <Children>
+                                                    <Button name='SliceDownBigButton'>
+                                                        <ButtonPushedFcn>SliceStepButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>4</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'−−'</Text>
+                                                        <Tooltip>'Back 1/10 of the slices'</Tooltip>
+                                                    </Button>
+                                                    <Button name='SliceDownButton'>
+                                                        <ButtonPushedFcn>SliceStepButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>5</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'−'</Text>
+                                                        <Tooltip>'Previous slice'</Tooltip>
+                                                    </Button>
+                                                    <Button name='SliceUpButton'>
+                                                        <ButtonPushedFcn>SliceStepButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>7</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'+'</Text>
+                                                        <Tooltip>'Next slice'</Tooltip>
+                                                    </Button>
+                                                    <Button name='SliceUpBigButton'>
+                                                        <ButtonPushedFcn>SliceStepButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>8</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'++'</Text>
+                                                        <Tooltip>'Forward 1/10 of the slices'</Tooltip>
+                                                    </Button>
+                                                    <Label name='ViewLabel'>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'View'</Text>
+                                                    </Label>
+                                                    <DropDown name='AxisDropDown'>
+                                                        <Enable>'off'</Enable>
+                                                        <Items>{'XY (Z slices)', 'XZ (Y slices)', 'YZ (X slices)'}</Items>
+                                                        <ItemsData>{'XY', 'XZ', 'YZ'}</ItemsData>
+                                                        <Layout>
+                                                            <Column>2</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Tooltip>'Slicing axis for 3D volumes'</Tooltip>
+                                                        <Value>'XY'</Value>
+                                                        <ValueChangedFcn>AxisDropDownValueChanged</ValueChangedFcn>
+                                                    </DropDown>
+                                                    <Label name='SliceLabel'>
+                                                        <Layout>
+                                                            <Column>3</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Slice'</Text>
+                                                    </Label>
+                                                    <Slider name='SliceSlider'>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>6</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Limits>[1 2]</Limits>
+                                                        <MajorTicks>[]</MajorTicks>
+                                                        <MinorTicksMode>'manual'</MinorTicksMode>
+                                                        <Value>1</Value>
+                                                        <ValueChangedFcn>SliceSliderValueChanged</ValueChangedFcn>
+                                                        <ValueChangingFcn>SliceSliderValueChanging</ValueChangingFcn>
+                                                    </Slider>
+                                                    <NumericEditField name='SliceEditField'>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>9</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Limits>[1 Inf]</Limits>
+                                                        <RoundFractionalValues>'on'</RoundFractionalValues>
+                                                        <Value>1</Value>
+                                                        <ValueChangedFcn>SliceEditFieldValueChanged</ValueChangedFcn>
+                                                        <ValueDisplayFormat>'%d'</ValueDisplayFormat>
+                                                    </NumericEditField>
+                                                    <Label name='SliceCountLabel'>
+                                                        <Layout>
+                                                            <Column>10</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'/ 1'</Text>
+                                                    </Label>
+                                                    <Button name='RotateLeftButton'>
+                                                        <ButtonPushedFcn>RotateButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>11</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'⟲ 90°'</Text>
+                                                        <Tooltip>'Rotate the view 90° counter-clockwise (display and clicks; data unchanged)'</Tooltip>
+                                                    </Button>
+                                                    <Button name='RotateRightButton'>
+                                                        <ButtonPushedFcn>RotateButtonPushed</ButtonPushedFcn>
+                                                        <Enable>'off'</Enable>
+                                                        <Layout>
+                                                            <Column>12</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'⟳ 90°'</Text>
+                                                        <Tooltip>'Rotate the view 90° clockwise (display and clicks; data unchanged)'</Tooltip>
+                                                    </Button>
+                                                </Children>
+                                            </GridLayout>
+                                            <Panel name='SidePanel'>
+                                                <AutoResizeChildren>'off'</AutoResizeChildren>
+                                                <Layout>
+                                                    <Column>2</Column>
+                                                    <Row>[2 3]</Row>
+                                                </Layout>
+                                                <Children>
+                                                    <GridLayout name='SideGrid'>
+                                                        <ColumnWidth>{'1x'}</ColumnWidth>
+                                                        <RowHeight>{'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 8, 'fit', '1x', 'fit', 8, 'fit', 'fit', 8, 'fit'}</RowHeight>
+                                                        <RowSpacing>6</RowSpacing>
+                                                        <Children>
+                                                            <Label name='ClickModeHeading'>
+                                                                <FontWeight>'bold'</FontWeight>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Text>'Click mode'</Text>
+                                                            </Label>
+                                                            <DropDown name='ClickModeDropDown'>
+                                                                <Items>{'Refine one object (clicks combine)', 'One object per click'}</Items>
+                                                                <ItemsData>{'refine', 'each'}</ItemsData>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>2</Row>
+                                                                </Layout>
+                                                                <Tooltip>'Refine: several clicks shape one object. One per click: each left-click is its own object.'</Tooltip>
+                                                                <Value>'refine'</Value>
+                                                                <ValueChangedFcn>ClickModeDropDownValueChanged</ValueChangedFcn>
+                                                            </DropDown>
+                                                            <Label name='TextHeading'>
+                                                                <FontWeight>'bold'</FontWeight>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>3</Row>
+                                                                </Layout>
+                                                                <Text>'Text prompt (find all instances)'</Text>
+                                                            </Label>
+                                                            <GridLayout name='TextGrid'>
+                                                                <ColumnSpacing>6</ColumnSpacing>
+                                                                <ColumnWidth>{'1x', 'fit'}</ColumnWidth>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>4</Row>
+                                                                </Layout>
+                                                                <Padding>[0 0 0 0]</Padding>
+                                                                <RowHeight>{'fit'}</RowHeight>
+                                                                <Children>
+                                                                    <EditField name='TextPromptField'>
+                                                                        <Layout>
+                                                                            <Column>1</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Placeholder>'e.g. grain'</Placeholder>
+                                                                        <Tooltip>'A short noun phrase; SAM 3 finds every matching instance on this slice'</Tooltip>
+                                                                        <ValueChangedFcn>TextPromptFieldValueChanged</ValueChangedFcn>
+                                                                    </EditField>
+                                                                    <Button name='FindButton'>
+                                                                        <ButtonPushedFcn>FindButtonPushed</ButtonPushedFcn>
+                                                                        <Layout>
+                                                                            <Column>2</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Find all'</Text>
+                                                                        <Tooltip>'Segment all instances of the text on the current slice'</Tooltip>
+                                                                    </Button>
+                                                                </Children>
+                                                            </GridLayout>
+                                                            <GridLayout name='ScoreGrid'>
+                                                                <ColumnSpacing>6</ColumnSpacing>
+                                                                <ColumnWidth>{'fit', 60, '1x'}</ColumnWidth>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>5</Row>
+                                                                </Layout>
+                                                                <Padding>[0 0 0 0]</Padding>
+                                                                <RowHeight>{'fit'}</RowHeight>
+                                                                <Children>
+                                                                    <Label name='ScoreLabel'>
+                                                                        <Layout>
+                                                                            <Column>1</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Text min score'</Text>
+                                                                    </Label>
+                                                                    <NumericEditField name='ScoreField'>
+                                                                        <Layout>
+                                                                            <Column>2</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Limits>[0 1]</Limits>
+                                                                        <Tooltip>'Text prompt only: instances scoring below this are ignored (lower = more, possibly wrong, detections). Does not affect clicks or propagation.'</Tooltip>
+                                                                        <Value>0.5</Value>
+                                                                        <ValueDisplayFormat>'%.2f'</ValueDisplayFormat>
+                                                                    </NumericEditField>
+                                                                </Children>
+                                                            </GridLayout>
+                                                            <CheckBox name='ConnectedCheckBox'>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>6</Row>
+                                                                </Layout>
+                                                                <Text>'Keep objects in one piece (connected)'</Text>
+                                                                <Tooltip>'Remove disconnected fragments from new masks: keep the piece under the click (2D) or the largest piece (text results, 3D propagation)'</Tooltip>
+                                                                <Value>true</Value>
+                                                            </CheckBox>
+                                                            <Label name='ModeHeading'>
+                                                                <FontWeight>'bold'</FontWeight>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>7</Row>
+                                                                </Layout>
+                                                                <Text>'Segmentation mode'</Text>
+                                                            </Label>
+                                                            <DropDown name='ModeDropDown'>
+                                                                <Enable>'off'</Enable>
+                                                                <Items>{'Current slice (2D)', '3D volume (propagate)'}</Items>
+                                                                <ItemsData>{'2D', '3D'}</ItemsData>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>8</Row>
+                                                                </Layout>
+                                                                <Value>'2D'</Value>
+                                                                <ValueChangedFcn>ModeDropDownValueChanged</ValueChangedFcn>
+                                                            </DropDown>
+                                                            <GridLayout name='RangeGrid'>
+                                                                <ColumnSpacing>6</ColumnSpacing>
+                                                                <ColumnWidth>{'fit', '1x', 'fit', '1x'}</ColumnWidth>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>9</Row>
+                                                                </Layout>
+                                                                <Padding>[0 0 0 0]</Padding>
+                                                                <RowHeight>{'fit'}</RowHeight>
+                                                                <Children>
+                                                                    <Label name='FromLabel'>
+                                                                        <Layout>
+                                                                            <Column>1</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'From'</Text>
+                                                                    </Label>
+                                                                    <NumericEditField name='FromField'>
+                                                                        <Enable>'off'</Enable>
+                                                                        <Layout>
+                                                                            <Column>2</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Limits>[1 Inf]</Limits>
+                                                                        <RoundFractionalValues>'on'</RoundFractionalValues>
+                                                                        <Tooltip>'First slice of the propagation range'</Tooltip>
+                                                                        <Value>1</Value>
+                                                                        <ValueChangedFcn>RangeFieldsChanged</ValueChangedFcn>
+                                                                        <ValueDisplayFormat>'%d'</ValueDisplayFormat>
+                                                                    </NumericEditField>
+                                                                    <Label name='ToLabel'>
+                                                                        <Layout>
+                                                                            <Column>3</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'to'</Text>
+                                                                    </Label>
+                                                                    <NumericEditField name='ToField'>
+                                                                        <Enable>'off'</Enable>
+                                                                        <Layout>
+                                                                            <Column>4</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Limits>[1 Inf]</Limits>
+                                                                        <RoundFractionalValues>'on'</RoundFractionalValues>
+                                                                        <Tooltip>'Last slice of the propagation range'</Tooltip>
+                                                                        <Value>1</Value>
+                                                                        <ValueChangedFcn>RangeFieldsChanged</ValueChangedFcn>
+                                                                        <ValueDisplayFormat>'%d'</ValueDisplayFormat>
+                                                                    </NumericEditField>
+                                                                </Children>
+                                                            </GridLayout>
+                                                            <GridLayout name='ContactGrid'>
+                                                                <ColumnSpacing>6</ColumnSpacing>
+                                                                <ColumnWidth>{'fit', '1x'}</ColumnWidth>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>10</Row>
+                                                                </Layout>
+                                                                <Padding>[0 0 0 0]</Padding>
+                                                                <RowHeight>{'fit'}</RowHeight>
+                                                                <Children>
+                                                                    <Label name='ContactLabel'>
+                                                                        <Layout>
+                                                                            <Column>1</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Where objects touch'</Text>
+                                                                    </Label>
+                                                                    <DropDown name='ContactDropDown'>
+                                                                        <Items>{'Keep existing objects', 'New propagation takes over', 'Leave touching voxels empty'}</Items>
+                                                                        <ItemsData>{'keep', 'overwrite', 'empty'}</ItemsData>
+                                                                        <Layout>
+                                                                            <Column>2</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Tooltip>'Rule for voxels claimed by two objects during 3D propagation: between objects tracked together, between passes, and against objects already added'</Tooltip>
+                                                                        <Value>'keep'</Value>
+                                                                    </DropDown>
+                                                                </Children>
+                                                            </GridLayout>
+                                                            <Button name='PropagateButton'>
+                                                                <ButtonPushedFcn>PropagateButtonPushed</ButtonPushedFcn>
+                                                                <Enable>'off'</Enable>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>11</Row>
+                                                                </Layout>
+                                                                <Text>'Propagate through volume'</Text>
+                                                                <Tooltip>'Track the objects on this slice through the range: new ones (clicks, text) or, if none, the existing objects shown on this slice'</Tooltip>
+                                                            </Button>
+                                                            <Label name='PropagateInfoLabel'>
+                                                                <FontColor>[0.4 0.4 0.4]</FontColor>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>12</Row>
+                                                                </Layout>
+                                                                <Text>'3D mode: click on one slice, then propagate.'</Text>
+                                                                <WordWrap>'on'</WordWrap>
+                                                            </Label>
+                                                            <GridLayout name='ObjectsHeaderGrid'>
+                                                                <ColumnSpacing>6</ColumnSpacing>
+                                                                <ColumnWidth>{'fit', '1x'}</ColumnWidth>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>14</Row>
+                                                                </Layout>
+                                                                <Padding>[0 0 0 0]</Padding>
+                                                                <RowHeight>{'fit'}</RowHeight>
+                                                                <Children>
+                                                                    <Label name='ObjectsHeading'>
+                                                                        <FontWeight>'bold'</FontWeight>
+                                                                        <Layout>
+                                                                            <Column>1</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Objects'</Text>
+                                                                    </Label>
+                                                                    <CheckBox name='OnlySliceCheckBox'>
+                                                                        <Layout>
+                                                                            <Column>2</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Only this slice'</Text>
+                                                                        <Tooltip>'List only the objects present on the shown slice'</Tooltip>
+                                                                        <ValueChangedFcn>OnlySliceCheckBoxValueChanged</ValueChangedFcn>
+                                                                    </CheckBox>
+                                                                </Children>
+                                                            </GridLayout>
+                                                            <ListBox name='ObjectsListBox'>
+                                                                <Items>{}</Items>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>15</Row>
+                                                                </Layout>
+                                                                <Multiselect>'on'</Multiselect>
+                                                                <Tooltip>'Ctrl+click or Shift+click to select several objects'</Tooltip>
+                                                                <Value>{}</Value>
+                                                                <ValueChangedFcn>ObjectsListBoxValueChanged</ValueChangedFcn>
+                                                            </ListBox>
+                                                            <GridLayout name='ObjectButtonsGrid'>
+                                                                <ColumnSpacing>6</ColumnSpacing>
+                                                                <ColumnWidth>{'1x', '1x', '1x'}</ColumnWidth>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>16</Row>
+                                                                </Layout>
+                                                                <Padding>[0 0 0 0]</Padding>
+                                                                <RowHeight>{'fit', 'fit'}</RowHeight>
+                                                                <Children>
+                                                                    <Button name='DeleteObjectButton'>
+                                                                        <ButtonPushedFcn>DeleteObjectButtonPushed</ButtonPushedFcn>
+                                                                        <Enable>'off'</Enable>
+                                                                        <Layout>
+                                                                            <Column>1</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Delete'</Text>
+                                                                        <Tooltip>'Delete the objects selected in the list'</Tooltip>
+                                                                    </Button>
+                                                                    <Button name='MergeObjectsButton'>
+                                                                        <ButtonPushedFcn>MergeObjectsButtonPushed</ButtonPushedFcn>
+                                                                        <Enable>'off'</Enable>
+                                                                        <Layout>
+                                                                            <Column>2</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Merge'</Text>
+                                                                        <Tooltip>'Join the selected objects into one (keeps the lowest number)'</Tooltip>
+                                                                    </Button>
+                                                                    <Button name='SplitObjectButton'>
+                                                                        <ButtonPushedFcn>SplitObjectButtonPushed</ButtonPushedFcn>
+                                                                        <Enable>'off'</Enable>
+                                                                        <Layout>
+                                                                            <Column>3</Column>
+                                                                            <Row>1</Row>
+                                                                        </Layout>
+                                                                        <Text>'Split'</Text>
+                                                                        <Tooltip>'Split the selected object: click one point inside each part, then Apply split (Enter)'</Tooltip>
+                                                                    </Button>
+                                                                    <Button name='DeleteAllSelectedButton'>
+                                                                        <ButtonPushedFcn>DeleteAllButtonPushed</ButtonPushedFcn>
+                                                                        <Enable>'off'</Enable>
+                                                                        <Layout>
+                                                                            <Column>[1 2]</Column>
+                                                                            <Row>2</Row>
+                                                                        </Layout>
+                                                                        <Text>'Delete all not propagated'</Text>
+                                                                        <Tooltip>'Delete every clicked object and every object added in 2D (asks first)'</Tooltip>
+                                                                    </Button>
+                                                                    <Button name='DeleteAllPropagatedButton'>
+                                                                        <ButtonPushedFcn>DeleteAllButtonPushed</ButtonPushedFcn>
+                                                                        <Enable>'off'</Enable>
+                                                                        <Layout>
+                                                                            <Column>3</Column>
+                                                                            <Row>2</Row>
+                                                                        </Layout>
+                                                                        <Text>'Delete all 3D'</Text>
+                                                                        <Tooltip>'Delete every propagated (3D) object (asks first)'</Tooltip>
+                                                                    </Button>
+                                                                </Children>
+                                                            </GridLayout>
+                                                            <Label name='OpacityLabel'>
+                                                                <FontWeight>'bold'</FontWeight>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>18</Row>
+                                                                </Layout>
+                                                                <Text>'Overlay opacity'</Text>
+                                                            </Label>
+                                                            <Slider name='OpacitySlider'>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>19</Row>
+                                                                </Layout>
+                                                                <Limits>[0 1]</Limits>
+                                                                <MajorTicks>[0 0.25 0.5 0.75 1]</MajorTicks>
+                                                                <Value>0.45</Value>
+                                                                <ValueChangedFcn>OpacitySliderValueChanged</ValueChangedFcn>
+                                                            </Slider>
+                                                            <Label name='HelpLabel'>
+                                                                <FontColor>[0.35 0.35 0.35]</FontColor>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>21</Row>
+                                                                </Layout>
+                                                                <Text>{'• Refine: left-click include (+), right-click exclude (×)'; '• One per click: left-click adds, right-click removes'; '• Enter: add object · Ctrl+Z: undo · Esc: clear'; '• Mouse wheel: zoom'}</Text>
+                                                                <VerticalAlignment>'top'</VerticalAlignment>
+                                                                <WordWrap>'on'</WordWrap>
+                                                            </Label>
+                                                        </Children>
+                                                    </GridLayout>
+                                                </Children>
+                                            </Panel>
+                                        </Children>
+                                    </GridLayout>
+                                </Children>
+                            </Tab>
+                            <Tab name='ModelTab'>
+                                <AutoResizeChildren>'off'</AutoResizeChildren>
+                                <Title>'Model and device'</Title>
+                                <Children>
+                                    <GridLayout name='ModelGrid'>
+                                        <ColumnWidth>{'1x'}</ColumnWidth>
+                                        <Padding>[14 14 14 14]</Padding>
+                                        <RowHeight>{'fit', '1x'}</RowHeight>
+                                        <RowSpacing>14</RowSpacing>
+                                        <Children>
+                                            <GridLayout name='ModelFormGrid'>
+                                                <ColumnWidth>{110, 380, '1x'}</ColumnWidth>
+                                                <Layout>
+                                                    <Column>1</Column>
+                                                    <Row>1</Row>
+                                                </Layout>
+                                                <Padding>[0 0 0 0]</Padding>
+                                                <RowHeight>{'fit', 'fit', 'fit', 'fit', 'fit', 'fit', 'fit'}</RowHeight>
+                                                <Children>
+                                                    <Label name='ModelFieldLabel'>
+                                                        <HorizontalAlignment>'right'</HorizontalAlignment>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Text>'Model'</Text>
+                                                    </Label>
+                                                    <DropDown name='ModelDropDown'>
+                                                        <Items>{'SAM 3 (recommended; 2D and 3D)', 'SAM 3.1 (experimental; 2D only, slow)'}</Items>
+                                                        <ItemsData>{'sam3', 'sam3.1'}</ItemsData>
+                                                        <Layout>
+                                                            <Column>2</Column>
+                                                            <Row>1</Row>
+                                                        </Layout>
+                                                        <Value>'sam3'</Value>
+                                                        <ValueChangedFcn>ModelSettingsChanged</ValueChangedFcn>
+                                                    </DropDown>
+                                                    <Label name='DeviceFieldLabel'>
+                                                        <HorizontalAlignment>'right'</HorizontalAlignment>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>2</Row>
+                                                        </Layout>
+                                                        <Text>'Device'</Text>
+                                                    </Label>
+                                                    <DropDown name='DeviceDropDown'>
+                                                        <Items>{'Auto (GPU if available)', 'GPU (CUDA)', 'CPU (slow: ~25 s per image)'}</Items>
+                                                        <ItemsData>{'auto', 'cuda', 'cpu'}</ItemsData>
+                                                        <Layout>
+                                                            <Column>2</Column>
+                                                            <Row>2</Row>
+                                                        </Layout>
+                                                        <Value>'auto'</Value>
+                                                        <ValueChangedFcn>ModelSettingsChanged</ValueChangedFcn>
+                                                    </DropDown>
+                                                    <Label name='PrecisionFieldLabel'>
+                                                        <HorizontalAlignment>'right'</HorizontalAlignment>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>3</Row>
+                                                        </Layout>
+                                                        <Text>'Precision'</Text>
+                                                    </Label>
+                                                    <DropDown name='PrecisionDropDown'>
+                                                        <Items>{'Auto (float16 on older GPUs, bfloat16 on newer)', 'float32 (reference, ~2× slower)', 'float16', 'bfloat16 (Ampere or newer GPUs)'}</Items>
+                                                        <ItemsData>{'auto', 'float32', 'float16', 'bfloat16'}</ItemsData>
+                                                        <Layout>
+                                                            <Column>2</Column>
+                                                            <Row>3</Row>
+                                                        </Layout>
+                                                        <Value>'auto'</Value>
+                                                        <ValueChangedFcn>ModelSettingsChanged</ValueChangedFcn>
+                                                    </DropDown>
+                                                    <Label name='BatchFieldLabel'>
+                                                        <HorizontalAlignment>'right'</HorizontalAlignment>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>4</Row>
+                                                        </Layout>
+                                                        <Text>'Objects per pass'</Text>
+                                                    </Label>
+                                                    <GridLayout name='BatchGrid'>
+                                                        <ColumnSpacing>8</ColumnSpacing>
+                                                        <ColumnWidth>{120, 60, '1x'}</ColumnWidth>
+                                                        <Layout>
+                                                            <Column>[2 3]</Column>
+                                                            <Row>4</Row>
+                                                        </Layout>
+                                                        <Padding>[0 0 0 0]</Padding>
+                                                        <RowHeight>{'fit'}</RowHeight>
+                                                        <Children>
+                                                            <DropDown name='BatchModeDropDown'>
+                                                                <Items>{'Auto', 'Custom'}</Items>
+                                                                <ItemsData>{'auto', 'custom'}</ItemsData>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Tooltip>'How many objects 3D propagation tracks at once. Auto: fits the free GPU memory. More objects than this are processed in several passes.'</Tooltip>
+                                                                <Value>'auto'</Value>
+                                                                <ValueChangedFcn>BatchSettingsChanged</ValueChangedFcn>
+                                                            </DropDown>
+                                                            <NumericEditField name='BatchSizeField'>
+                                                                <Enable>'off'</Enable>
+                                                                <Layout>
+                                                                    <Column>2</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Limits>[1 64]</Limits>
+                                                                <RoundFractionalValues>'on'</RoundFractionalValues>
+                                                                <Tooltip>'Objects tracked per propagation pass (Custom mode)'</Tooltip>
+                                                                <Value>8</Value>
+                                                                <ValueChangedFcn>BatchSettingsChanged</ValueChangedFcn>
+                                                                <ValueDisplayFormat>'%d'</ValueDisplayFormat>
+                                                            </NumericEditField>
+                                                            <Label name='BatchInfoLabel'>
+                                                                <FontColor>[0.4 0.4 0.4]</FontColor>
+                                                                <Layout>
+                                                                    <Column>3</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Text>'Auto: decided from the free GPU memory when the model is loaded'</Text>
+                                                            </Label>
+                                                        </Children>
+                                                    </GridLayout>
+                                                    <Label name='WeightsFieldLabel'>
+                                                        <HorizontalAlignment>'right'</HorizontalAlignment>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>5</Row>
+                                                        </Layout>
+                                                        <Text>'Weights'</Text>
+                                                    </Label>
+                                                    <GridLayout name='WeightsGrid'>
+                                                        <ColumnSpacing>8</ColumnSpacing>
+                                                        <ColumnWidth>{'fit', '1x'}</ColumnWidth>
+                                                        <Layout>
+                                                            <Column>[2 3]</Column>
+                                                            <Row>5</Row>
+                                                        </Layout>
+                                                        <Padding>[0 0 0 0]</Padding>
+                                                        <RowHeight>{'fit'}</RowHeight>
+                                                        <Children>
+                                                            <Button name='StoreWeightsButton'>
+                                                                <ButtonPushedFcn>StoreWeightsButtonPushed</ButtonPushedFcn>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Text>'Store weights in app folder'</Text>
+                                                                <Tooltip>'Copy the model weights into SAM3App\weights (download if needed). The app then loads them from there, and a copy of the app folder works on another computer without downloading or a Hugging Face login.'</Tooltip>
+                                                            </Button>
+                                                            <Label name='WeightsInfoLabel'>
+                                                                <FontColor>[0.4 0.4 0.4]</FontColor>
+                                                                <Layout>
+                                                                    <Column>2</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Text>''</Text>
+                                                            </Label>
+                                                        </Children>
+                                                    </GridLayout>
+                                                    <GridLayout name='ModelButtonsGrid'>
+                                                        <ColumnSpacing>8</ColumnSpacing>
+                                                        <ColumnWidth>{'fit', 'fit', '1x'}</ColumnWidth>
+                                                        <Layout>
+                                                            <Column>2</Column>
+                                                            <Row>6</Row>
+                                                        </Layout>
+                                                        <Padding>[0 0 0 0]</Padding>
+                                                        <RowHeight>{'fit'}</RowHeight>
+                                                        <Children>
+                                                            <Button name='LoadModelButton'>
+                                                                <ButtonPushedFcn>LoadModelButtonPushed</ButtonPushedFcn>
+                                                                <FontWeight>'bold'</FontWeight>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Text>'Load model'</Text>
+                                                                <Tooltip>'Load with these settings (otherwise the model loads on first use)'</Tooltip>
+                                                            </Button>
+                                                            <Button name='UnloadModelButton'>
+                                                                <ButtonPushedFcn>UnloadModelButtonPushed</ButtonPushedFcn>
+                                                                <Enable>'off'</Enable>
+                                                                <Layout>
+                                                                    <Column>2</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Text>'Unload (free GPU memory)'</Text>
+                                                            </Button>
+                                                        </Children>
+                                                    </GridLayout>
+                                                    <Label name='StatusFieldLabel'>
+                                                        <HorizontalAlignment>'right'</HorizontalAlignment>
+                                                        <Layout>
+                                                            <Column>1</Column>
+                                                            <Row>7</Row>
+                                                        </Layout>
+                                                        <Text>'Status'</Text>
+                                                    </Label>
+                                                    <GridLayout name='ModelStatusGrid'>
+                                                        <ColumnSpacing>6</ColumnSpacing>
+                                                        <ColumnWidth>{16, '1x'}</ColumnWidth>
+                                                        <Layout>
+                                                            <Column>[2 3]</Column>
+                                                            <Row>7</Row>
+                                                        </Layout>
+                                                        <Padding>[0 0 0 0]</Padding>
+                                                        <RowHeight>{'fit'}</RowHeight>
+                                                        <Children>
+                                                            <Lamp name='ModelLamp'>
+                                                                <Color>[0.65 0.65 0.65]</Color>
+                                                                <Layout>
+                                                                    <Column>1</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                            </Lamp>
+                                                            <Label name='ModelStatusLabel'>
+                                                                <Layout>
+                                                                    <Column>2</Column>
+                                                                    <Row>1</Row>
+                                                                </Layout>
+                                                                <Text>'Not loaded'</Text>
+                                                            </Label>
+                                                        </Children>
+                                                    </GridLayout>
+                                                </Children>
+                                            </GridLayout>
+                                            <TextArea name='ModelInfoArea'>
+                                                <Editable>'off'</Editable>
+                                                <FontName>'Consolas'</FontName>
+                                                <Layout>
+                                                    <Column>1</Column>
+                                                    <Row>2</Row>
+                                                </Layout>
+                                                <Value>'Environment details appear here after Python starts.'</Value>
+                                            </TextArea>
+                                        </Children>
+                                    </GridLayout>
+                                </Children>
+                            </Tab>
+                            <Tab name='AboutTab'>
+                                <AutoResizeChildren>'off'</AutoResizeChildren>
+                                <Title>'About'</Title>
+                                <Children>
+                                    <GridLayout name='AboutGrid'>
+                                        <ColumnWidth>{'1x'}</ColumnWidth>
+                                        <Padding>[0 0 0 0]</Padding>
+                                        <RowHeight>{'1x'}</RowHeight>
+                                        <Children>
+                                            <HTML name='AboutHTML'>
+                                                <Layout>
+                                                    <Column>1</Column>
+                                                    <Row>1</Row>
+                                                </Layout>
+                                            </HTML>
+                                        </Children>
+                                    </GridLayout>
+                                </Children>
+                            </Tab>
+                            <Tab name='HelpTab'>
+                                <AutoResizeChildren>'off'</AutoResizeChildren>
+                                <Title>'Help'</Title>
+                                <Children>
+                                    <GridLayout name='HelpGrid'>
+                                        <ColumnWidth>{'1x'}</ColumnWidth>
+                                        <Padding>[0 0 0 0]</Padding>
+                                        <RowHeight>{'1x'}</RowHeight>
+                                        <Children>
+                                            <HTML name='HelpHTML'>
+                                                <Layout>
+                                                    <Column>1</Column>
+                                                    <Row>1</Row>
+                                                </Layout>
+                                            </HTML>
+                                        </Children>
+                                    </GridLayout>
+                                </Children>
+                            </Tab>
+                        </Children>
+                    </TabGroup>
+                    <Label name='StatusLabel'>
+                        <FontColor>[0.3 0.3 0.3]</FontColor>
+                        <Layout>
+                            <Column>1</Column>
+                            <Row>2</Row>
+                        </Layout>
+                        <Text>'Open a TIFF file in the Import tab to start.'</Text>
+                    </Label>
+                </Children>
+            </GridLayout>
+        </Children>
+    </UIFigure>
+    <RunConfiguration>
+        <StartupFcn>startupFcn</StartupFcn>
+    </RunConfiguration>
+    <AppDetails>
+        <Name>SAM3Segmenter</Name>
+        <Version>1.9</Version>
+    </AppDetails>
+    <InternalData>
+        <AppId>2467cee2-736d-4b68-c026-dfbbee0ec0de</AppId>
+    </InternalData>
+    <!-- Thumbnail is used by file previewers. To change how the thumbnail is captured or stored, use the App Details dialog box in App Designer. -->
+    <Thumbnail autoCapture='true'>data:image/jpg;base64,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</Thumbnail>
+</MATLABApp>
